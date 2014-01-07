@@ -1,0 +1,29 @@
+{
+	"info" : {
+		"name" : "RPUtils Loader (JS)"
+	},
+	
+	"client" : {
+		"init_script" : "file(client_init.lua)"
+	},
+	
+	"radiant" : {
+		"functions" : {
+			"init_server" : {
+				"controller" : "file(js/rp.lua)",
+				"endpoint" : "server"
+			},
+			
+			"log_server" : {
+				"controller" : "file(js/rp.lua)",
+				"endpoint" : "server"
+			}
+		}
+	},
+	
+	"ui" : {
+		"js" : [
+			"file(js/rp.js)"
+		]
+	}
+}
