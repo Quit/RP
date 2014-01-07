@@ -1,16 +1,14 @@
-//function rpf() { radiant.call('radiant:play_sound', 'stonehearth:sounds:ui:start_menu:popup'); }
-//function rps() { radiant.call('radiant:play_sound', 'stonehearth:sounds:ui:promotion_menu:stamp'); }
-
 var dump = function(obj, level, rec, recStr)
 {
+
 	if (!level)
 	{
-		level = 0;
+		level = 1;
 	}
 	
 	if (!rec)
 	{
-		rec = {}
+		rec = { objs: [], paths: [] } // O(n) :|
 	}
 	
 	if (!recStr)
@@ -24,25 +22,26 @@ var dump = function(obj, level, rec, recStr)
 	if (typeof(obj) == 'object')
 	{
 		// Define us already
-		rec[obj] = recStr;
+		rec.objs.push(obj);
+		rec.paths.push(recStr);
 		
 		for (var key in obj)
 		{
 			var value = obj[key];
-			
 			text += ind + '[' + key + '] = ';
 			
 			// INCEPTION?
 			if (typeof(value) == 'object')
 			{
 				// Already done?
-				if (rec[value])
+				var recInd = rec.objs.indexOf(value); // O(n)ein. :(
+				if (recInd >= 0)
 				{
-					text += '(recursion in ' + rec[value] + ')';
+					text += '(reference to ' + rec.paths[recInd] + ')';
 				}
 				else
 				{
-					text +='\n';
+					text += "\n";
 					text += dump(value, level + 1, rec, (recStr == '' ? key : recStr + '.' + key));
 				}
 			}
@@ -50,12 +49,16 @@ var dump = function(obj, level, rec, recStr)
 			{
 				text += '(function)';
 			}
+			else if (typeof(value) == 'string')
+			{
+				text += '"' + value.replace('\\', '\\\\').replace('"', '\"') + '"';
+			}
 			else
 			{
 				text += value;
 			}
 			
-			text += '\n';
+			text += "\n";
 		}
 	}
 	else
@@ -67,28 +70,29 @@ var dump = function(obj, level, rec, recStr)
 }
 
 // callName => proxyfunc.
-// We can later do id stuff, for now this suffices.
 var call_proxies = {};
 	
+// Ember tells us not to create new global variables, because App is already one
+// I say we should create TWO global variables just because!
 rp = {
 	// log(str1, str2, ...)
 	// Logs any amount of variables into the server log (prefixed by [JS])
 	log : function() { 
 		var args = Array.prototype.slice.call(arguments);
-		args.unshift('rp:log_server');
-		radiant.call.apply(radiant, args); 
+		radiant.callv('rp:log_server', args); 
 	},
 	
 	// dump(obj)
 	// returns a (dumped) string that is obj.
 	dump : dump,
-		
+	
+	// set_call_proxy(callName, func): redirects all radiant.call(callName) to func; allowing you to return different stuff or mess around altogether.
 	set_call_proxy : function(callName, func) { call_proxies[callName] = func; }
 }
 
 
-// Initialize RP immediately, give audio feedback
-radiant.call('rp:init_server'); //.done(rps).fail(rpf);
+// Initialize RP immediately, *without* audio feedback. Long live rp:log_server.
+radiant.call('rp:init_server').done(function() { rp.log('RP JS Loader done.'); });
 
 // Now to some magic.
 // Patch radiant.call
@@ -122,6 +126,3 @@ window.onerror = function(errorMsg, url, lineNumber)
 	
 	return ret;
 }
-
-rp.log('RP JS Loader done.');
-//radiant.call('rp:init_client'); //.done(rps).fail(rpf); // client_init does a fine job
