@@ -48,12 +48,12 @@ SOFTWARE.
 require('base')
 
 -- Our ridiculously inflated version
-local VERSION = 259
+local VERSION = 1400
 
 -- If RP has already been initialized, abort
 -- In related news, >:[ this strict thing.
 if rawget(_G, 'rp') then
-	return
+	return rp
 end
 
 -- No need to bother strictlua. I feel this is a dirty hack, but then again, what here isn't.
