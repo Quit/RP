@@ -59,6 +59,7 @@ end
 -- No need to bother strictlua. I feel this is a dirty hack, but then again, what here isn't.
 rp = {}
 local rp = rp -- err yes.
+rp.constants = {} -- We won't have too many constants, but eh.
 
 local function WriteToLog(text)
 	radiant.log.write_('rploader', 0, text) -- TODO: Replace this with a proper logger once we figured out where they're logging to.
@@ -67,11 +68,20 @@ end
 
 -- Normal logging, similar to print.
 function rp.log(text)
+	if not text then
+		print()
+	end
+	
 	WriteToLog(text)
 end
 
 -- /advanced/ logging, similar to printf.
 function rp.logf(text, ...)
+	if not text then
+		print()
+		return
+	end
+	
 	-- Do we have to format text?
 	
 	-- would like lua5.2
