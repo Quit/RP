@@ -1,4 +1,4 @@
---[[
+--[=============================================================================[
 The MIT License (MIT)
 
 Copyright (c) 2014 RepeatPan
@@ -21,7 +21,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-]]
+]=============================================================================]
 
 --[[ Overwriting default behaviour. 
 	! Sets io.output: Now set to stonehearth_mod.log instead of ("inaccessible") cout (I guess?). On the server, this is stonehearth_mod(_server).log.
