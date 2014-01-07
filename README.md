@@ -52,6 +52,8 @@ Also, don't sue me on the names, I'm a programmer, not a writer. The "For develo
 * [Lucky Worker][lucky_worker]: More of a joke mod. The first worker will always be a man, the others will be women. Might hurt productivity a bit.
 * [Merge Names][merge_names]: More of a proof-of-concept, this will always use two first names and two last names and combine them, to get names like "Jessdara Brightwellburlyhands".
 
+All these mods are [also available on GitHub](https://github.com/Quit/RP-Mods)
+
 # Troubleshooting, terms and conditions
 RP, including all mods that I have created and linked in this thread are released under the **MIT License** (except those parts that I did not create, such as `table.show` or partially rewritten Radiant functions). The next part should be common sense, but better safe than sorry: **I kindly ask you to not re-upload any of my content anywhere else.** Installing it should be easy enough, so just link to this thread. No hot linking please. You are however (as stated by the license) free to build your own mods based on mine and release them, as long as you give proper credit (a link to this repos and mentioning it somewhere in the source is more than enough!)
 
@@ -65,8 +67,8 @@ If you run into an issue while using this mod (and that issue wasn't there befor
 
 
 [rp.smod]: https://dl.dropboxusercontent.com/u/44230457/sh/rp.smod
-[manifest.json]: https://dl.dropboxusercontent.com/u/44230457/sh/manifest.json
-[rp.json]: https://dl.dropboxusercontent.com/u/44230457/sh/rp.json
+[manifest.json]: https://raw.github.com/Quit/RP-Mods/master/config/manifest.json
+[rp.json]: https://raw.github.com/Quit/RP-Mods/master/config/rp.json
 [sized_people]: http://discourse.stonehearth.net/t/rp-and-repeatpans-mods/4809/2
 [test_world]: http://discourse.stonehearth.net/t/rp-and-repeatpans-mods/4809/3
 [workforce]: http://discourse.stonehearth.net/t/rp-and-repeatpans-mods/4809/4
