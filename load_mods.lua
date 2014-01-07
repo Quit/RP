@@ -22,7 +22,7 @@ function rp.load_mods()
 		end
 		
 		-- Try to get the manifest json
-		local _, manifest = rp.run_safe(radiant.resources.load_json, modName .. '/manifest.json')
+		local _, manifest = rp.run_safe(radiant.resources.load_manifest, modName)
 		if manifest and manifest.rp then
 			return manifest
 		end
