@@ -4,7 +4,7 @@ local CONFIG = rp.CONFIG
 
 -- Loading status of a mod. This is accessible by reading a `mod.status`
 local LoadingStatus = {
-	AVAILABLE = 'available', -- We have found this mod and will attempt to load it (later). You should never see this status externally.
+	AVAILABLE = 'available', -- We have found this mod and will attempt to load it (later).
 	LOADING = 'loading', -- We are currently loading this mod (somewhere in the callstack)
 	LOADED = 'loaded', -- We have already loaded this mod
 	FAILED = 'failed', -- We tried to load this mod, but it failed
@@ -185,14 +185,24 @@ function rp.load_mods()
 		mod.status = LoadingStatus.LOADED
 		return true
 	end
+	
+	-- Provide a copy of the mod table that reflects our current status, but does not allow modifying it.
+	-- (We don't want others to (accidentally) mess around with the mod loading process.)
+	do
+		local ms = {}
+		for k, v in pairs(mods) do
+			-- Simple put: Allow reading, disallow changing anything that is present in the original.
+			-- Basically, a proxy-table.
+			ms[k] = setmetatable({}, { __index = function(_, key) return v[key] end, __newindex = function(_, key, value) if not rawget(v, key) then rawset(_, key, value) end end })
+		end
 		
+		rp.available_mods = ms
+	end
+	
 	for modName, data in pairs(mods) do
 		log('Loading %s returned %s', modName, tostring(loadMod(modName, data)))
 	end
 	
 	log()
 	log("We're past mod loading and all is well.")
-	
-	-- Save it in rp.
-	rp.available_mods = mods
 end
