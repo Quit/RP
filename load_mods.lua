@@ -37,6 +37,10 @@ function logInfo(text, ...)
 	return log('[INFO] ' .. text, ...)
 end
 
+function logWarning(text, ...)
+	return log('[WARNING] ' .. text, ...)
+end
+
 local CONFIG = rp.CONFIG
 
 -- Loading status of a mod. This is accessible by reading a `mod.status`
@@ -268,7 +272,14 @@ function rp.load_mods()
 				init = init:sub(0, #init - 4)
 			end
 			
-			if rp.run_safe(_host.require, _host, name .. '.' .. init) then
+			local successOne, successTwo = rp.run_safe(_host.require, _host, name .. '.' .. init)
+			
+			if successTwo == nil then
+				logWarning('%s reported nil; either the mod is not properly written or there was an error. Check stonehearth.log to be sure.', name)
+				successTwo = true
+			end
+			
+			if successOne and successTwo then
 				mod.status = LoadingStatus.LOADED
 				log('Successfully loaded %s', name)
 				return true
