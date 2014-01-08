@@ -211,7 +211,7 @@ do
 		local err
 		local args = { ... }
 		-- I want lua5.2. :|
-		local ret = { xpcall(function() return func(unpack(args)) end, function(ex) return debug.traceback(tostring(ex), 2) end) }
+		local ret = { xpcall(function() return func(unpack(args)) end, function(ex) return debug.traceback(tostring(ex), 4) end) }
 		unpatch_g_c_m_n()
 		
 		if not ret[1] then

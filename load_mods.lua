@@ -125,7 +125,8 @@ function rp.load_mods()
 	
 	-- And then all smods.
 	for modName in io.popen('dir /B "mods\\*.smod'):lines() do
-		local mod = getMod(modName:sub(0, #modName - 5), ModSource.SMOD_ARCHIVE)
+		modName = modName:sub(0, #modName - 5)
+		local mod = getMod(modName, ModSource.SMOD_ARCHIVE)
 		
 		if mod then
 			mods[modName] = mod
