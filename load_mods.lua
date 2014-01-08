@@ -23,6 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]=============================================================================]
 
+-- Localizing.
+local type = type
+
 -- Handles mod loading.
 local log = rp.logf
 local CONFIG = rp.CONFIG
@@ -111,8 +114,45 @@ function rp.load_mods()
 		end
 	end
 
-	log('Built list of possible mods. Start loading process...')
+	log('Built list of possible mods. Build dependencies list...')
 
+	for modName, mod in pairs(mods) do
+		-- If a mod is available, it has a rp tag.
+		if mod.status == LoadingStatus.AVAILABLE then
+			local before = mod.manifest.rp.before
+			
+			-- Does it define "before"?
+			if before then
+				if type(before) ~= 'table' then
+					before = { before }
+				end
+				
+				-- Go for it.
+				for _, other in pairs(before) do
+					-- Check if said mod exists
+					local otherMod = mods[other]
+					
+					-- It does!
+					if otherMod then
+						local rp = otherMod.manifest.rp
+						-- Make sure the field exists
+						rp.requested = rp.requested or {}
+						
+						-- Make sure the other field is a table. I really feel like we
+						-- should drop string support.
+						if type(rp.requested) ~= 'table' then
+							rp.requested = { rp.requested }
+						end
+						
+						-- Insert it.
+						table.insert(rp.requested, modName)
+						log('Injected %s as request of %s', modName, other)
+					end
+				end
+			end
+		end
+	end
+	
 	-- Attempts to load said mod
 	local function loadMod(name, mod)
 		mod = mod or mods[name]
