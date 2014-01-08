@@ -124,10 +124,14 @@ var oldError = window.onerror;
 
 window.onerror = function(errorMsg, url, lineNumber)
 {
-	var ret = false;
-	if (typeof oldError != 'undefined')
-		ret = oldError(errorMsg, url, lineNumber);
-	rp.log('ERROR: ' + url + ':' + lineNumber + ': ' + errorMsg);
+	errorMsg = errorMsg || '(unknown error message)';
+	url = url || '(unknown url)';
+	lineNumber = lineNumber || '(unknown line number)';
 	
-	return ret;
+	rp.log('ERROR: ' + url + ':' + lineNumber + ': ' + errorMsg);
+
+	if (typeof oldError != 'undefined')
+		return oldError(errorMsg, url, lineNumber);
+	
+	return false;
 }
