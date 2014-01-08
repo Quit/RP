@@ -28,6 +28,15 @@ local type = type
 
 -- Handles mod loading.
 local log = rp.logf
+
+function logError(text, ...)
+	return log('[ERROR] ' .. text, ...)
+end
+
+function logInfo(text, ...)
+	return log('[INFO] ' .. text, ...)
+end
+
 local CONFIG = rp.CONFIG
 
 -- Loading status of a mod. This is accessible by reading a `mod.status`
@@ -61,6 +70,7 @@ function rp.load_mods()
 	
 	rp.load_mods = nil
 	log('Start mod loader...')
+	log()
 	
 	local disabledMods = {}
 	
@@ -83,7 +93,7 @@ function rp.load_mods()
 		
 		-- If the mod is disabled *or* has no rp entry in its manifest, we'll skip it
 		if disabledMods[modName] or not manifest.rp then
-			log('Skip %s (ignored or no rp manifest)', modName)
+			logInfo('Skip %s (ignored or no rp manifest)', modName)
 			
 			status = LoadingStatus.SKIPPED
 		end
@@ -92,6 +102,8 @@ function rp.load_mods()
 	end
 	
 	log('Checking directories...')
+	log()
+	
 	-- Check all directories
 	for modName in io.popen('dir /B /A:D mods'):lines() do
 		-- Not disabled?
@@ -103,7 +115,10 @@ function rp.load_mods()
 		end
 	end
 	
+	log()
 	log('Checking smod files...')
+	log()
+	
 	-- And then all smods.
 	for modName in io.popen('dir /B "mods\\*.smod'):lines() do
 		local mod = getMod(modName, ModSource.SMOD_ARCHIVE)
@@ -114,15 +129,33 @@ function rp.load_mods()
 		end
 	end
 
-	log('Built list of possible mods. Build dependencies list...')
-
+	log()
+	log('Built list of possible mods. Do advanced manifest magic...')
+	log()
+	
 	for modName, mod in pairs(mods) do
 		-- If a mod is available, it has a rp tag.
 		if mod.status == LoadingStatus.AVAILABLE then
-			local before = mod.manifest.rp.before
+			local before, conflicts = mod.manifest.rp.before, mod.manifest.rp.conflicts
 			
-			-- Does it define "before"?
-			if before then
+			-- Are we not playing along well with other mods?
+			if conflicts then
+				if type(conflicts) ~= 'table' then
+					conflicts = { conflicts }
+				end
+				
+				for _, other in pairs(conflicts) do
+					local otherMod = mods[other]
+					if otherMod and otherMod.status == LoadingStatus.AVAILABLE then
+						logError('Conflict: %s says it is not compatible with %s!', modName, other)
+						mod.status = LoadingStatus.SKIPPED
+						break -- we can't get more disabled.
+					end
+				end
+			end
+			
+			-- Does it define "before"? Are we not conflicted?
+			if before and mod.status == LoadingStatus.AVAILABLE then
 				if type(before) ~= 'table' then
 					before = { before }
 				end
@@ -133,7 +166,7 @@ function rp.load_mods()
 					local otherMod = mods[other]
 					
 					-- It does!
-					if otherMod then
+					if otherMod and otherMod.status == LoadingStatus.AVAILABLE then
 						local rp = otherMod.manifest.rp
 						-- Make sure the field exists
 						rp.requested = rp.requested or {}
@@ -146,7 +179,7 @@ function rp.load_mods()
 						
 						-- Insert it.
 						table.insert(rp.requested, modName)
-						log('Injected %s as request of %s', modName, other)
+						logInfo('Injected %s as request of %s', modName, other)
 					end
 				end
 			end
@@ -155,10 +188,11 @@ function rp.load_mods()
 	
 	-- Attempts to load said mod
 	local function loadMod(name, mod)
+		log()
 		mod = mod or mods[name]
 		
 		if not mod then
-			log('Cannot load mod %q: Not found in mod list.', name)
+			logError('Cannot load mod %q: Not found in mod list.', name)
 			return false
 		end
 		
@@ -168,10 +202,10 @@ function rp.load_mods()
 		
 		-- Failed or skipped mods do not count.
 		if mod.status == LoadingStatus.FAILED or mod.status == LoadingStatus.SKIPPED then
-			log('Cannot load %q: status is %s', name, tostring(mod.status))
+			logError('Cannot load %q: status is %s', name, tostring(mod.status))
 			return false
 		elseif mod.status == LoadingStatus.LOADING then
-			log('Cycle found! Attempted to load %q /again/', name)
+			logError('Cycle found! Attempted to load %q /again/', name)
 			mod.status = LoadingStatus.FAILED
 			return false
 		end
@@ -192,7 +226,7 @@ function rp.load_mods()
 			for k, required in pairs(requirement) do
 				log('Attempt to load requirement %s for %s', required, name)
 				if not loadMod(required) then
-					log('Cannot load %q: Required mod %q is missing/not loading/disabled', name, required)
+					logError('Cannot load %q: Required mod %q is missing/not loading/disabled', name, required)
 					mod.status = LoadingStatus.FAILED
 					return false
 				end
@@ -211,7 +245,7 @@ function rp.load_mods()
 			for k, requestee in pairs(requested) do
 				log('Attempt to load request %s', requestee, name)
 				if not loadMod(requestee) then
-					log('Requested mod %s for %s not found.', requestee, name)
+					logInfo('Requested mod %s for %s not found.', requestee, name)
 				else
 					log('%s successfully loaded for %s', requestee, name)
 				end
@@ -243,7 +277,7 @@ function rp.load_mods()
 				return false
 			end
 		else
-			log('No init file for %q found.', name)
+			logInfo('No init file for %q found.', name)
 		end
 		
 		-- Nothing to load.
@@ -264,8 +298,12 @@ function rp.load_mods()
 		rp.available_mods = ms
 	end
 	
+	log()
+	log("Start loading the mods...")
+	log()
+	
 	for modName, data in pairs(mods) do
-		log('Loading %s returned %s', modName, tostring(loadMod(modName, data)))
+		logInfo('Loading %s returned %s', modName, tostring(loadMod(modName, data)))
 	end
 	
 	log()
