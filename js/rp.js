@@ -79,6 +79,11 @@ rp = {
 	// Logs any amount of variables into the server log (prefixed by [JS])
 	log : function() { 
 		var args = Array.prototype.slice.call(arguments);
+		for (var i = 0; i < args.length; ++i)
+		{
+			if (typeof(args[i]) == 'function')
+				args[i] = '(JS function)';
+		}
 		radiant.callv('rp:log_server', args); 
 	},
 	
