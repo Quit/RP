@@ -22,8 +22,7 @@
 	},
 	
 	"ui" : {
-		"js" : [
-			"file(js/rp.js)"
-		]
+		"html" : [ "file(js/rp.html)" ],
+		"js" : [ "file(js/rp.js)" ]
 	}
 }
