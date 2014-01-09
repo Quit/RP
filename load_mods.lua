@@ -42,6 +42,7 @@ function logWarning(text, ...)
 end
 
 local CONFIG = rp.CONFIG
+local VERSION = rp.constants.VERSION
 
 -- Loading status of a mod. This is accessible by reading a `mod.status`
 local LoadingStatus = {
@@ -219,6 +220,13 @@ function rp.load_mods()
 		mod.status = LoadingStatus.LOADING
 		
 		local rpm = mod.manifest.rp
+		
+		-- Version requirement?
+		if rpm.required_version and rpm.required_version > VERSION then
+			logError('Cannot load %q: Required RP version is %d, installed is %d', name, rpm.required_version, VERSION)
+			mod.status = LoadingStatus.FAILED
+			return false
+		end
 		
 		-- Requirements?
 		local requirement = rpm.required
