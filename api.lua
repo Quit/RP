@@ -59,7 +59,7 @@ end
 -- No need to bother strictlua. I feel this is a dirty hack, but then again, what here isn't.
 rp = {}
 local rp = rp -- err yes.
-rp.constants = {} -- We won't have too many constants, but eh.
+rp.constants = { VERSION = VERSION } -- We won't have too many constants, but eh.
 
 local function WriteToLog(text)
 	radiant.log.write_('rploader', 0, text) -- TODO: Replace this with a proper logger once we figured out where they're logging to.
