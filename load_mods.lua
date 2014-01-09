@@ -154,7 +154,7 @@ function rp.load_mods()
 					local otherMod = mods[other]
 					if otherMod and otherMod.status == LoadingStatus.AVAILABLE then
 						logError('Conflict: %s says it is not compatible with %s!', modName, other)
-						mod.status = LoadingStatus.SKIPPED
+						mod.status = LoadingStatus.FAILED
 						break -- we can't get more disabled.
 					end
 				end
