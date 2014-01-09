@@ -72,6 +72,9 @@ var dump = function(obj, level, rec, recStr)
 // callName => proxyfunc.
 var call_proxies = {};
 	
+// We don't obey your rules.
+var old_callv = radiant.callv.bind(radiant);
+	
 // Ember tells us not to create new global variables, because App is already one
 // I say we should create TWO global variables just because!
 rp = {
@@ -84,7 +87,7 @@ rp = {
 			if (typeof(args[i]) == 'function')
 				args[i] = '(JS function)';
 		}
-		radiant.callv('rp:log_server', args); 
+		old_callv('rp:log_server', args); 
 	},
 	
 	// dump(obj)
@@ -100,23 +103,15 @@ rp = {
 radiant.call('rp:init_server').done(function() { rp.log('RP JS Loader done.'); });
 
 // Now to some magic.
-// Patch radiant.call
-var oldCall = radiant.call;
-radiant.call = function()
+// Patch radiant.callv (which is used by radiant.call, so we get both!)
+radiant.callv = function(fn, args)
 {
-	var args = Array.prototype.slice.call(arguments);
-	var event = args[0];
-	var func = oldCall;
-	
-	if (event != 'rp:log_server')
+	if (call_proxies[fn] != null)
 	{
-		if (typeof call_proxies[event] != 'undefined')
-		{
-			return call_proxies[event].apply(null, args);
-		}
+		return call_proxies[fn].apply(null, args);
 	}
 	
-	return oldCall.apply(radiant, args);
+	return old_callv(fn, args);
 }
 
 // Patch errors to the console
