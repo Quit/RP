@@ -105,6 +105,12 @@ radiant.call('rp:init_server').done(function()
 						var args = data.click.args;
 						data.click = function() { radiant.callv(func, args); };
 					}
+					else if (data.click.action == "fire_event")
+					{
+						var event_name = data.click.event_name;
+						var event_data = data.click.event_data;
+						data.click = function() { $(top).trigger(event_name, event_data); };
+					}
 				}
 				
 				this.menuActions[id] = { click : data.click };
