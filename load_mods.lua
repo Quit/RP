@@ -212,7 +212,6 @@ function rp.load_mods()
 			return false
 		elseif mod.status == LoadingStatus.LOADING then
 			logError('Cycle found! Attempted to load %q /again/', name)
-			mod.status = LoadingStatus.FAILED
 			return false
 		end
 		
