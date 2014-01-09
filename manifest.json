@@ -23,6 +23,9 @@
 	
 	"ui" : {
 		"html" : [ "file(js/rp.html)" ],
-		"js" : [ "file(js/rp.js)" ]
+		"js" : [ 
+			"file(js/rp.js)", 
+			"file(js/start_menu.js)"
+		]
 	}
 }
