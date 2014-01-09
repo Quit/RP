@@ -320,6 +320,10 @@ function rp.load_mods()
 			end
 		end
 		
+		-- Until I come to a good conclusion, stonehearth is moved into the available mods.
+		-- I mean, mods can assume that it *did* run and that it did so successfully.
+		-- It's not a RP mod per se though, and therefore the only mod that fulfills `not manifest.json:rp`
+		available_mods.stonehearth = all_mods.stonehearth
 		rp.all_mods, rp.available_mods = all_mods, available_mods
 	end
 	
