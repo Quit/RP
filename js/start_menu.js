@@ -15,20 +15,36 @@ Example data:
 				name : "Chop 1",
 				hotkey : "1",
 				icon : "/stonehearth/ui/game/start_menu/images/chop_trees.png",
-				click: function() { rp.log("chop 1 lololo"); }
+				click: function() { rp.log("Bleigh/Chop 1 was pressed!"); }
 			},
 			
 			{
 				name : "Chop 2",
 				hotkey: "2",
 				icon: "/stonehearth/ui/game/start_menu/images/chop_trees.png",
-				click: function() { rp.log("chop 2 lolo"); }
+				click: function() { rp.log("Bleigh/Chop 2 was pressed!"); }
 			},
 			
 			{
 				name : "Empty Chop. :(",
 				hotkey: "3",
-				click: function() { rp.log("chop 3 heheh"); }
+				click: function() { rp.log("Bleigh/Empty Chop was pressed!"); }
+			},
+			
+			{
+				name: "Lonely Chop",
+				click: function() { rp.log("Bleigh/Loneley chop was pressed. :)"); }
+			},
+			
+			{
+				name : "Deeper",
+				
+				elements: [
+					{
+						name: "Welcome to limbo!",
+						click: function() { rp.log("You can't get out."); return false; }
+					}
+				]
 			}
 		]
 	},
@@ -60,7 +76,7 @@ radiant.call('rp:init_server').done(function()
 	App.StonehearthStartMenuView = App.StonehearthStartMenuView.extend({
 		// Keeps track of our last id.
 		rp_lastMenuId : 0,
-		
+
 		// Creates a new <li>, properly formatted to contain a new item.
 		rp_createNewEntry : function(data)
 		{
@@ -78,6 +94,19 @@ radiant.call('rp:init_server').done(function()
 			{
 				var id = 'rpAction' + (++this.rp_lastMenuId);
 				link.attr('menuId', id);
+				
+				// Is it a call-command-ish table?
+				if (typeof(data.click) == 'object')
+				{
+					// Check its type.
+					if (data.click.action == "call")
+					{
+						var func = data.click["function"]; // brr?
+						var args = data.click.args;
+						data.click = function() { radiant.callv(func, args); };
+					}
+				}
+				
 				this.menuActions[id] = { click : data.click };
 			}
 			
