@@ -97,20 +97,19 @@ end
 -- Now we can log.
 rp.logf('Initializing RPLoader r%d (is_server %s)', VERSION, tostring(radiant.is_server))
 
--- Our own config (gets loaded later).
-local CONFIG = {
-	disabled_mods = -- mods that have been disabled and won't be loaded; can also be abused to ignore folders.
-	{
-	}
-}
-
 -- Load the config tools.
 rp.load_config = require('config')
 
 do
 	-- And our own config.
-	local success
-	success, CONFIG = rp.load_config('config/rp.json', CONFIG)
+	local CONFIG, success = {
+		disabled_mods = -- mods that have been disabled and won't be loaded; can also be abused to ignore folders.
+		{
+		}
+	}
+	
+	CONFIG, success = rp.load_config('config/rp.json', CONFIG)
+	
 	if success then
 		rp.log('Loading configuration from rp.json')
 	else

@@ -74,9 +74,9 @@ return function(jsonUri, default)
 	
 	-- If we can't load it, skip
 	if not success or not json then
-		return false, default
+		return default, false
 	end
 	
 	-- Return the validated json
-	return true, comfortJson(json, default)
+	return comfortJson(json, default), true
 end
