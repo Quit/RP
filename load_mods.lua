@@ -308,14 +308,19 @@ function rp.load_mods()
 	-- Provide a copy of the mod table that reflects our current status, but does not allow modifying it.
 	-- (We don't want others to (accidentally) mess around with the mod loading process.)
 	do
-		local ms = {}
+		local all_mods, available_mods = {}, {}
+		
 		for k, v in pairs(mods) do
 			-- Simple put: Allow reading, disallow changing anything that is present in the original.
 			-- Basically, a proxy-table.
-			ms[k] = setmetatable({}, { __index = function(_, key) return v[key] end, __newindex = function(_, key, value) if not rawget(v, key) then rawset(_, key, value) end end })
+			local m = setmetatable({}, { __index = function(_, key) return v[key] end, __newindex = function(_, key, value) if not rawget(v, key) then rawset(_, key, value) end end })
+			all_mods[k] = m
+			if m.status == LoadingStatus.AVAILABLE then
+				available_mods[k] = m
+			end
 		end
 		
-		rp.available_mods = ms
+		rp.all_mods, rp.available_mods = all_mods, available_mods
 	end
 	
 	log()
