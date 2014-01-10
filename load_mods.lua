@@ -221,7 +221,7 @@ function rp.load_mods()
 		local rpm = mod.manifest.rp
 		
 		-- Version requirement?
-		if rpm.required_version and rpm.required_version > VERSION then
+		if tonumber(rpm.required_version) and tonumber(rpm.required_version) > VERSION then
 			logError('Cannot load %q: Required RP version is %d, installed is %d', name, rpm.required_version, VERSION)
 			mod.status = LoadingStatus.FAILED
 			return false
