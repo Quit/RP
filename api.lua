@@ -48,7 +48,7 @@ SOFTWARE.
 require('base')
 
 -- Our ridiculously inflated version
-local VERSION = 2201
+local VERSION = 2300
 
 -- If RP has already been initialized, abort
 -- In related news, >:[ this strict thing.
