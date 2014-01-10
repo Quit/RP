@@ -29,54 +29,78 @@ SOFTWARE.
 	This simply returns the handy function to parse configs.
 ]]
 
--- compares if all values in "json" are comfortable to "defaultValues"
--- and returns json modified in a way that all values comfort default
--- (i.e. have the same type)
-local function comfortJson(json, default)
-	for key, vDefault in pairs(default) do
-		local vJson = json[key]
-		
-		-- json does not define this value: We do it.
-		if not vJson then
-			json[key] = vDefault
-		else -- json does define this value, validate it
-			local tJson, tDefault = type(vJson), type(vDefault)
 
-			-- Different types?
-			if tJson ~= tDefault then
-				-- Try to fix it?
-				if tDefault == 'table' then
-					vJson = { vJson } -- other languages would call this... boxing! hahaha!
-				elseif tDefault == 'string' then -- lua has some nasty things for strings.
-					vJson = tostring(vJson)
-				elseif tDefault == 'number' and tonumber(vJson) then -- json does check for this, but we're just humans
-					vJson = tonumber(vJson)
-				else -- Nope, we can't save it. It's something really odd.
-					vJson = vDefault
-				end
-				
-				json[key] = vJson -- now comfy?
-			end
-			
-			-- Is it necessary to sub-validate this table?
-			if tDefault == 'table' then
-				json[key] = comfortJson(vJson, vDefault) -- I guess we could do this iterative, but I doubt anyone is going to stack config levels. Or causes cycles.
-			end
+local boolean_table = 
+{
+	[0] = false,
+	["0"] = false,
+	["false"] = false,
+	["no"] = false,
+	
+	[1] = true,
+	["1"] = true,
+	["true"] =  true,
+	["yes"] = true
+}
+
+local comfort_table
+local function comfort_values(given, default)
+	local given_type, default_type = type(given), type(default)
+	
+	-- Not compatible?
+	if given_type ~= default_type then
+		if default_type == 'table' then
+			return comfort_table({ given }, default)
+		elseif default_type == 'string' then
+			return tostring(given)
+		elseif default_type == 'number' and tonumber(given) then
+			return tonumber(given)
+		elseif default_type == 'boolean' and boolean_table[given] ~= nil then
+			return boolean_table[given]
+		else
+			return default -- This will already be properly aligned
 		end
 	end
 	
-	return json
-end
-
-return function(jsonUri, default)
-	-- Try to load the json.
-	local success, json = pcall(radiant.resources.load_json, jsonUri)
-	
-	-- If we can't load it, skip
-	if not success or not json then
-		return default, false
+	if default_type == 'table' then
+		return comfort_table(given, default)
 	end
 	
+	return given
+end
+
+-- compares if all values in "json" are comfortable to "defaultValues"
+-- and returns json modified in a way that all values comfort default
+-- (i.e. have the same type)
+function comfort_table(given, default)
+	for key, default_value in pairs(default) do
+		local given_value = given[key]
+		
+		-- json does not define this value: We do it.
+		if given_value == nil then
+			given[key] = default_value
+		else -- json does define this value, validate it
+			given[key] = comfort_values(given_value, default_value)
+		end
+	end
+	
+	return given
+end
+
+-- We could use `radiant.util.get_config` buuuuut
+-- since we're wrapping this in a helper class, we kind of can't.
+-- This will return the *whole* config table, as seen in `default`.
+function rp.load_config(default)
+	local json = _host:get_config('mods.' .. __get_current_module_name(3)) or {}
+	
 	-- Return the validated json
-	return comfortJson(json, default), true
+	return comfort_table(json, default), true
+end
+
+function rp.get_config(str, default)
+	if type(str) ~= 'string' then
+		error("bad argument #1 to 'get_config' (string expected, got " .. type(str) .. ")")
+	end
+	
+	return comfort_values(_host:get_config('mods.' .. __get_current_module_name(3) .. '.' .. str), default)
 end

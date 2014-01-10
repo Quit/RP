@@ -98,26 +98,16 @@ end
 rp.logf('Initializing RPLoader r%d (is_server %s)', VERSION, tostring(radiant.is_server))
 
 -- Load the config tools.
-rp.load_config = require('config')
+require('config')
 
 do
 	-- And our own config.
-	local CONFIG, success = {
-		disabled_mods = -- mods that have been disabled and won't be loaded; can also be abused to ignore folders.
-		{
-		}
+	local CONFIG = {
+		disabled_mods = {} -- list of disabled mods
 	}
 	
-	CONFIG, success = rp.load_config('config/rp.json', CONFIG)
-	
-	if success then
-		rp.log('Loading configuration from rp.json')
-	else
-		rp.log('No proper rp.json found; using defaults.')
-	end
-	
 	-- Set it to rp.CONFIG, the _init files will get rid of it.
-	rp.CONFIG = CONFIG
+	rp.CONFIG = rp.load_config(CONFIG)
 end
 
 --[[ Little helpers and extensions.
