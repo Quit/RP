@@ -23,6 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]=============================================================================]
 
+-- Initialize math.random()
+math.randomseed(os.time())
+
 do -- Overwrites `io.output' to our log file(s)
 	io.output('stonehearth_mod' .. (radiant.is_server and '_server' or '') .. '.log')
 	function print(...)
