@@ -211,15 +211,23 @@ do
 	end
 	
 	-- Hack. Haaack. Evil hack. OK.
-	function rp.load_stonehearth_service(serviceName)
-		-- Kids, don't try this at home.
-		local success, service = pcall(_host.require, _host, 'stonehearth.services.' .. serviceName)
-		if not success then
-			rp.logf('Service %q not found.', serviceName)
+	local function load_stonehearth_thing(name, errorMessage)
+		local success, thing = pcall(_host.require, _host, 'stonehearth.' .. name)
+		if not success or not thing then
+			rp.logf(errorMessage, serviceName, tostring(thing))
 			return nil
 		else
-			return service
+			return thing
 		end
+	end
+	
+	
+	function rp.load_stonehearth_service(serviceName)
+		return load_stonehearth_thing('services.' .. serviceName, 'Service %q could not be loaded: %s')
+	end
+	
+	function rp.load_stonehearth_call_handler(handlerName)
+		return load_stonehearth_thing('call_handlers.' .. handlerName, 'Call handler %q could not be loaded: %s')
 	end
 end
 
