@@ -43,51 +43,52 @@ end
 
 -- create_entity and proxy friends
 do
-	local oldCreate = radiant.entities.create_entity
-	assert(type(oldCreate) == 'function')
+	local old_create = radiant.entities.create_entity
+	assert(type(old_create) == 'function')
 	
-	local proxyTable = {}
-	local postCreationHooks = {}
+	local proxy_table = {}
+	local post_creation_hooks = {}
 	
-	local function callHook(func, args)
+	local function call_hook(func, args)
 		func(unpack(args))
 	end
 	
-	function radiant.entities.create_entity(entName)
-		local proxy = proxyTable[entName]
+	function radiant.entities.create_entity(entity_name)
+		local proxy = proxy_table[entity_name]
 		
 		-- Proxied?
 		if proxy then
 			-- If proxy is a function, call it and pass the original entName
 			if type(proxy) == 'function' then
-				local succ, newName = pcall(proxy, entName)
+				local succ, new_name = pcall(proxy, entity_name)
 				if not succ then
-					rp.logf('Entity Creation proxy for %q (%s) failed: %s', entName, debug.getinfo(proxy).short_src, newName)
+					rp.logf('Entity Creation proxy for %q (%s) failed: %s', entity_name, debug.getinfo(proxy).short_src, new_name)
+					proxy = nil
 				else
 					-- Make sure it's a string.
-					if type(newName) ~= 'string' then
-						rp.logf('Entity Creation proxy for %q (%s) failed: expected string as return value, but got %s', entName, debug.getinfo(proxy).short_src, type(newName))
+					if type(new_name) ~= 'string' then
+						rp.logf('Entity Creation proxy for %q (%s) failed: expected string as return value, but got %s', entity_name, debug.getinfo(proxy).short_src, type(new_name))
+						proxy = nil
 					else
-						entName = newName
+						proxy = new_name
 					end
 				end
-			-- Otherwise, use it as a literal
-			else
-				entName = proxy
 			end
 		end
 		
 		-- Create the entity already.
-		local ent = oldCreate(entName)
+		local ent = old_create(proxy or entity_name)
 		
-		-- Do we have to call hooks on this?
-		local hooks = postCreationHooks[entName]
-		
-		if hooks then
-			for k, v in pairs(hooks) do
-				local succ, err = pcall(k, ent, unpack(v))
-				if not succ then
-					printf("Hook %s for %s failed: %s", tostring(debug.getinfo(k).short_src), entName, err)
+		-- Pro: No redunant code.
+		-- Contra: Geez, what IS this
+		for _, name in pairs({ entity_name, proxy }) do
+			local hooks = proxy_table[name]
+			if hooks then
+				for k, v in pairs(hooks) do
+					local succ, err = pcall(k, ent, unpack(v))
+					if not succ then
+						printf("Hook %s for %s failed: %s", tostring(debug.getinfo(k).short_src), name, err)
+					end
 				end
 			end
 		end
@@ -95,29 +96,29 @@ do
 		return ent
 	end
 	
-	function rp.set_entity_proxy(oldName, newName)
-		local t = type(newName)
+	function rp.set_entity_proxy(old_name, new_name)
+		local t = type(new_name)
 		if t ~= 'string' and t ~= 'function' then
-			error("bad argument #2 to 'set_entity_proxy' (function or string expected, got " .. type(newName) .. ")")
+			error("bad argument #2 to 'set_entity_proxy' (function or string expected, got " .. type(new_name) .. ")")
 		end
 		
-		proxyTable[oldName] = newName
+		proxy_table[old_name] = new_name
 	end
 	
-	function rp.is_entity_proxied(entName)
-		return proxyTable[entName]
+	function rp.is_entity_proxied(entity_name)
+		return proxy_table[entity_name]
 	end
 	
-	function rp.add_entity_created_hook(entName, func, ...)
+	function rp.add_entity_created_hook(entity_name, func, ...)
 		if type(func) ~= 'function' then
 			error("bad argument #2 to 'add_entity_created_hook' (function expected, got " .. type(func) .. ")")
 		end
 		
-		if not postCreationHooks[entName] then
-			postCreationHooks[entName] = {}
+		if not post_creation_hooks[entity_name] then
+			post_creation_hooks[entity_name] = {}
 		end
 		
-		postCreationHooks[entName][func] = { ... }
+		post_creation_hooks[entity_name][func] = { ... }
 	end
 end
 
