@@ -91,10 +91,23 @@ end
 -- since we're wrapping this in a helper class, we kind of can't.
 -- This will return the *whole* config table, as seen in `default`.
 function rp.load_config(default)
-	local json = _host:get_config('mods.' .. __get_current_module_name(3)) or {}
+	local mod_name = __get_current_module_name(3)
 	
-	-- Return the validated json
-	return comfort_table(json, default), true
+	-- Try to load config/[modname].json
+	local json_loaded, json = pcall(radiant.resources.load_json, 'config/' .. mod_name .. '.json')
+	
+	-- Comfort it to the default values
+	json = comfort_values(json or {}, default)
+	
+	-- Try to load the user settings
+	local user_settings = _host:get_config('mods.' .. __get_current_module_name(3))
+	
+	-- Try to comfort the user_settings to json (which, by now, is our new default)
+	if user_settings then
+		json = comfort_table(user_settings, json)
+	end
+	
+	return json, json_loaded or user_settings ~= nil
 end
 
 function rp.get_config(str, default)
@@ -102,5 +115,5 @@ function rp.get_config(str, default)
 		error("bad argument #1 to 'get_config' (string expected, got " .. type(str) .. ")")
 	end
 	
-	return comfort_values(_host:get_config('mods.' .. __get_current_module_name(3) .. '.' .. str), default)
+	return comfort_values(_host:get_config('mods.' .. __get_current_module_name(3)  .. '.' .. str), default)
 end
