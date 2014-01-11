@@ -62,12 +62,12 @@ Example data:
 */
 rp.add_to_start_menu = function(data)
 {
-	if (menuExtraData == null)
-		throw "Cannot add stuff to the menu; menu was already created.";
-	else if (!(data instanceof Array))
+	if (!(data instanceof Array))
 		throw "rp.add_to_start_menu expects an array as first argument.";
-	
-	menuExtraData = menuExtraData.concat(data);
+	else if (menuExtraData == null)
+		App.StonehearthStartMenu.rp_insertElements(data, true);
+	else
+		menuExtraData = menuExtraData.concat(data);
 }
 
 // If anyone has a better idea as to how to get this done after the function has been defined - ring me up.
@@ -75,24 +75,23 @@ radiant.call('rp:init_server').done(function()
 {
 	App.StonehearthStartMenuView = App.StonehearthStartMenuView.extend({
 		// Keeps track of our last id.
-		rp_lastMenuId : 0,
-
+		_rp_lastMenuId : 0,
+		
+		// The object that we will (ab)use
+		_rp_cloneWarrior : null,
+		
 		// Creates a new <li>, properly formatted to contain a new item.
-		rp_createNewEntry : function(data)
+		_rp_createNewEntry : function(data)
 		{
 			// <li>
 			var li = $('<li>');
 			// <a> - our link
 			var link = $('<a href="#">').attr('hotkey', data.hotkey);
 			
-			//~ // If a hotkey was defined, do it
-			//~ if (data.hotkey != null)
-				//~ link.attr('hotkey', data.hotkey);
-			
 			// If a click handler has been installed
 			if (data.click != null)
 			{
-				var id = 'rpAction' + (++this.rp_lastMenuId);
+				var id = 'rpAction' + (++this._rp_lastMenuId);
 				link.attr('menuId', id);
 				
 				// Is it a call-command-ish table?
@@ -130,7 +129,7 @@ radiant.call('rp:init_server').done(function()
 		},
 
 		// Tries to merge `data`into `context`, which should be some sort of ul.
-		rp_insertElements : function(data, context)
+		_rp_insertElements : function(data, context)
 		{
 			// suddenly, lots of Radiant's code becomes more clear
 			var self = this;
@@ -153,8 +152,23 @@ radiant.call('rp:init_server').done(function()
 				// Does not exist yet? Alright, add it.
 				if (entry == null)
 				{
-					entry = self.rp_createNewEntry(item);
+					entry = self._rp_createNewEntry(item);
 					context.append(entry);
+				}
+				else
+				{
+					// The entry does exist. Need to update it?
+					var a = entry.children('a');
+					if (item.hotkey)
+						a.first().attr('hotkey', item.hotkey);
+					if (item.icon)
+					{
+						var img = a.children('img');
+						if (img.length > 0) // image exists
+							img.attr('src', item.icon);
+						else // image does not exist
+							a.prepend($('<img>').attr('src', item.icon)); // my god I'm LAZY
+					}
 				}
 				
 				// After this point, "entry" exists and, in the best case, did something!
@@ -175,7 +189,7 @@ radiant.call('rp:init_server').done(function()
 						subEntry = subEntry.first();
 					
 					// Rinse and repeat until the stack can't handle it anymore.
-					self.rp_insertElements(item.elements, subEntry);
+					self._rp_insertElements(item.elements, subEntry);
 				}
 				
 				// TODO: In case elements was not set, should we allow overwriting of stuff?
@@ -183,19 +197,56 @@ radiant.call('rp:init_server').done(function()
 			});
 		},
 		
+		// A straight rip-off from the base class' 
+		_rp_rebuildMenu : function()
+		{
+			$('#startMenu').dlmenu({
+				animationClasses : { 
+					classin : 'dl-animate-in-sh', 
+					classout : 'dl-animate-out-sh' 
+				},
+				onLinkClick : function( el, ev ) { 
+					var menuId = $(el).find("a").attr('menuId');
+					self.onMenuClick(menuId)
+			  }
+      });
+		},
+		
+		// Can be called by external functions to add data to the start menu.
+		// "refresh" specifies whether the menu is to be rebuilt immediately (""~costly"")
+		rp_insertElements : function(data, refresh)
+		{
+			this._rp_insertElements(data, $('.dl-menu', this._rp_cloneWarrior));
+			
+			// TODO xxxx: Perform this after X seconds to avoid multiple
+			// rebuilds within ~the same time?
+			if (refresh)
+			{
+				$('#startMenu').replaceWith(this._rp_cloneWarrior.clone());
+				this._rp_rebuildMenu();
+			}
+		},
+		
 		// good ol' pseudo ctor
 		didInsertElement : function()
 		{
-			var dlMenu = $('#startMenu .dl-menu').first();
+			// Don't operate on a copy yet
+			this._rp_cloneWarrior = $('#startMenu');
 			
-			// Merge the json into the menu
-			this.rp_insertElements(menuExtraData, dlMenu);
+			// Merge the data we have collected so far into the menu
+			this.rp_insertElements(menuExtraData, false);
 		
-			// Make sure that calls become futile
+			// Backup the DOM so we can operate (and replace) on it later again
+			this._rp_cloneWarrior = this._rp_cloneWarrior.clone();
+			
+			// Make sure that further data is not cached but immediately added
 			menuExtraData = null;
 			
 			// Now you can do whatever evil magic you do
 			this._super();
+			
+			// I'm quite sure we're allowed to do this. Should do this. Why not?
+			App.StonehearthStartMenu = this;
 		}
 	});
 });
