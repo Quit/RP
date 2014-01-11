@@ -27,7 +27,7 @@ SOFTWARE.
 	! Sets io.output: Now set to stonehearth_mod.log instead of ("inaccessible") cout (I guess?). On the server, this is stonehearth_mod(_server).log.
 	! print(...): Redirects to use io.output instead. i.e. somewhere visible.
 	+ rp.run_safe(func, ...): glorified pcall with error reporting. I guess I could call it prun. As a pun.
-	+ rp.require_safe(modName): glorified pcall with evil magic to make require work. Or rather, magic so that pcall accepts require.
+	+ rp.require_safe(mod_name): glorified pcall with evil magic to make require work. Or rather, magic so that pcall accepts require.
 	+ rp.run_mod(module name): glorified pcall-require with error reporting.
 	+ PrintTable(tbl): The naming is Garry's fault, mixed with "I'm too lazy". but alas, have
 	+ print_table(tbl) (which is the same).
@@ -61,18 +61,26 @@ rp = {}
 local rp = rp -- err yes.
 rp.constants = { VERSION = VERSION } -- We won't have too many constants, but eh.
 
-local function WriteToLog(text)
+local function write_to_log(text)
 	radiant.log.write_('rploader', 0, text) -- TODO: Replace this with a proper logger once we figured out where they're logging to.
 	print('[' .. os.date() .. '] ' .. text)
 end
 
 -- Normal logging, similar to print.
-function rp.log(text)
-	if not text then
+function rp.log(...)
+	local count = select('#', ...)
+	
+	if count == 0 then
 		print()
 	end
 	
-	WriteToLog(text)
+	local t = { ... } 
+	
+	for i = 1, count do
+		t[i] = tostring(t[i])
+	end
+	
+	write_to_log(table.concat(t, '\t'))
 end
 
 -- /advanced/ logging, similar to printf.
@@ -82,15 +90,14 @@ function rp.logf(text, ...)
 		return
 	end
 	
-	-- Do we have to format text?
-	
 	-- would like lua5.2
-	local success, ftext = pcall(string.format, text, ...)
+	local success, formatted_text = pcall(string.format, text, ...)
 	
 	if not success then -- format error
-		WriteToLog(string.format('Invalid call to rp.logf(%q): %s', text, ftext))
+		write_to_log(string.format('Invalid call to rp.logf(%q): %s', text, formatted_text))
+		write_to_log(debug.traceback(2))
 	else
-		WriteToLog(ftext)
+		write_to_log(formatted_text)
 	end
 end
 
@@ -128,7 +135,7 @@ do
 	local patch_g_c_m_n, unpatch_g_c_m_n
 	do
 		local old__g_c_m_n = __get_current_module_name
-		local fakeSource = {}
+		local fake_source = {}
 		
 		local function new__g_c_m_n(depth)
 			local info = debug.getinfo(depth, "S")
@@ -139,7 +146,7 @@ do
 			
 			-- allow pcall to do its dirty require job
 			if info.source == '=[C]' and info.name == "pcall" then
-				return fakeSource[#fakeSource]
+				return fake_source[#fake_source]
 			end
 			
 			if info.source:sub(1, 1) ~= "@" then
@@ -158,7 +165,7 @@ do
 		
 		function patch_g_c_m_n()
 			-- Get the current source module, which should be... 3?
-			table.insert(fakeSource, debug.getinfo(3).source)
+			table.insert(fake_source, debug.getinfo(3).source)
 		
 			-- Patch the old function.
 			__get_current_module_name = new__g_c_m_n
@@ -166,26 +173,26 @@ do
 		
 		function unpatch_g_c_m_n()
 			__get_current_module_name = old__g_c_m_n
-			table.remove(fakeSource)
+			table.remove(fake_source)
 		end
 	end
 	
-	-- run_require(modName)
+	-- run_require(mod_name)
 	-- Requires said module and reports which module failed in case it does.
-	function rp.require_safe(modName)
-		rp.logf('Loading mod %q...', modName)
+	function rp.require_safe(mod_name)
+		rp.logf('Loading mod %q...', mod_name)
 		
 		local err
 		
 		patch_g_c_m_n()
-		local ret = { xpcall(function() require(modName) end, function(ex) return debug.traceback(tostring(ex), 2) end) }
+		local ret = { xpcall(function() require(mod_name) end, function(ex) return debug.traceback(tostring(ex), 2) end) }
 		unpatch_g_c_m_n()
 		
 		if not ret[1] then
-			rp.logf('Error while loading %q: %s', modName, ret[2])
+			rp.logf('Error while loading %q: %s', mod_name, ret[2])
 			return
 		else
-			rp.logf('Successfully ran %q', modName)
+			rp.logf('Successfully ran %q', mod_name)
 			table.remove(ret, 1)
 			return unpack(ret)			
 		end
@@ -211,10 +218,10 @@ do
 	end
 	
 	-- Hack. Haaack. Evil hack. OK.
-	local function load_stonehearth_thing(name, errorMessage)
+	local function load_stonehearth_thing(name, error_message)
 		local success, thing = pcall(_host.require, _host, 'stonehearth.' .. name)
 		if not success or not thing then
-			rp.logf(errorMessage, serviceName, tostring(thing))
+			rp.logf(error_message, name, tostring(thing))
 			return nil
 		else
 			return thing
@@ -222,12 +229,12 @@ do
 	end
 	
 	
-	function rp.load_stonehearth_service(serviceName)
-		return load_stonehearth_thing('services.' .. serviceName, 'Service %q could not be loaded: %s')
+	function rp.load_stonehearth_service(service_name)
+		return load_stonehearth_thing('services.' .. service_name, 'Service %q could not be loaded: %s')
 	end
 	
-	function rp.load_stonehearth_call_handler(handlerName)
-		return load_stonehearth_thing('call_handlers.' .. handlerName, 'Call handler %q could not be loaded: %s')
+	function rp.load_stonehearth_call_handler(handler_name)
+		return load_stonehearth_thing('call_handlers.' .. handler_name, 'Call handler %q could not be loaded: %s')
 	end
 end
 
