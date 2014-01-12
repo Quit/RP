@@ -29,15 +29,15 @@ local type = type
 -- Handles mod loading.
 local log = rp.logf
 
-function logError(text, ...)
+function log_error(text, ...)
 	return log('[ERROR] ' .. text, ...)
 end
 
-function logInfo(text, ...)
+function log_info(text, ...)
 	return log('[INFO] ' .. text, ...)
 end
 
-function logWarning(text, ...)
+function log_warning(text, ...)
 	return log('[WARNING] ' .. text, ...)
 end
 
@@ -45,12 +45,15 @@ local CONFIG = rp.CONFIG
 local VERSION = rp.constants.VERSION
 
 -- Loading status of a mod. This is accessible by reading a `mod.status`
+-- I would probably do quite a few things for the bit library now. And proper enums.
 local LoadingStatus = {
 	AVAILABLE = 'available', -- We have found this mod and will attempt to load it (later).
 	LOADING = 'loading', -- We are currently loading this mod (somewhere in the callstack)
 	LOADED = 'loaded', -- We have already loaded this mod
 	FAILED = 'failed', -- We tried to load this mod, but it failed
 	SKIPPED = 'skipped', -- We skipped this (not-RP) mod. A manifest might still exist.
+	DISABLED = 'disabled', -- We skipped this mod because we've disabled it
+	CONFLICTED = 'conflicted' -- We conflicted with another mod
 }
 
 local ModSource = {
@@ -77,19 +80,19 @@ function rp.load_mods()
 	log('Start mod loader...')
 	log()
 	
-	local disabledMods = {}
+	local disabled_mods = {}
 	
 	for k, v in pairs(CONFIG.disabled_mods) do
-		disabledMods[v] = true
+		disabled_mods[v] = true
 	end
 	
-	local function getMod(modName, source)
+	local function get_mod(mod_name, source)
 		-- Try to get the manifest json
-		local manySuccesses, manifest = rp.run_safe(radiant.resources.load_manifest, modName) -- many json, wow, much successes, amazing, many configs
+		local many_successes, manifest = rp.run_safe(radiant.resources.load_manifest, mod_name) -- many json, wow, much successes, amazing, many configs
 		
 		-- No manifest means a bad time.
 		-- It means that stonehearth *likely* hasn't loaded the mod either, so we're not going to bother.
-		if not manySuccesses or not manifest then
+		if not many_successes or not manifest then
 			return nil
 		end
 		
@@ -97,26 +100,28 @@ function rp.load_mods()
 		local status = LoadingStatus.AVAILABLE
 		
 		-- If the mod is disabled *or* has no rp entry in its manifest, we'll skip it
-		if disabledMods[modName] or not manifest.rp then
-			logInfo('Skip %s (ignored or no rp manifest)', modName)
-			
+		if disabled_mods[mod_name] then
+			log_info('Skip %s (disabled)', mod_name)
+			status = LoadingStatus.DISABLED
+		elseif not manifest.rp then
+			log_info('Skip %s (no rp manifest found)', mod_name)
 			status = LoadingStatus.SKIPPED
 		end
 		
-		return { manifest = manifest, source = source, status = status, name = modName } -- "name" is kinda redundant but I'll allow it
+		return { manifest = manifest, source = source, status = status, name = mod_name } -- "name" is kinda redundant but I'll allow it
 	end
 	
 	log('Checking directories...')
 	log()
 	
 	-- Check all directories
-	for modName in io.popen('dir /B /A:D mods'):lines() do
+	for mod_name in io.popen('dir /B /A:D mods'):lines() do
 		-- Not disabled?
-		local mod = getMod(modName, ModSource.DIRECTORY)
+		local mod = get_mod(mod_name, ModSource.DIRECTORY)
 		
 		if mod then
-			mods[modName] = mod
-			log('Found %s as rp mod (DIR)', modName)
+			mods[mod_name] = mod
+			log('Found %s as rp mod (DIR)', mod_name)
 		end
 	end
 	
@@ -125,13 +130,13 @@ function rp.load_mods()
 	log()
 	
 	-- And then all smods.
-	for modName in io.popen('dir /B "mods\\*.smod'):lines() do
-		modName = modName:sub(0, #modName - 5)
-		local mod = getMod(modName, ModSource.SMOD_ARCHIVE)
+	for mod_name in io.popen('dir /B "mods\\*.smod'):lines() do
+		mod_name = mod_name:sub(0, #mod_name - 5)
+		local mod = get_mod(mod_name, ModSource.SMOD_ARCHIVE)
 		
 		if mod then
-			mods[modName] = mod
-			log('Found %s as rp mod (SMOD)', modName)
+			mods[mod_name] = mod
+			log('Found %s as rp mod (SMOD)', mod_name)
 		end
 	end
 
@@ -139,7 +144,7 @@ function rp.load_mods()
 	log('Built list of possible mods. Do advanced manifest magic...')
 	log()
 	
-	for modName, mod in pairs(mods) do
+	for mod_name, mod in pairs(mods) do
 		-- If a mod is available, it has a rp tag.
 		if mod.status == LoadingStatus.AVAILABLE then
 			local before, conflicts = mod.manifest.rp.before, mod.manifest.rp.conflicts
@@ -151,10 +156,10 @@ function rp.load_mods()
 				end
 				
 				for _, other in pairs(conflicts) do
-					local otherMod = mods[other]
-					if otherMod and otherMod.status == LoadingStatus.AVAILABLE then
-						logError('Conflict: %s says it is not compatible with %s!', modName, other)
-						mod.status = LoadingStatus.FAILED
+					local other_mod = mods[other]
+					if other_mod and other_mod.status == LoadingStatus.AVAILABLE then
+						log_error('Conflict: %s says it is not compatible with %s!', mod_name, other)
+						mod.status = LoadingStatus.CONFLICTED
 						break -- we can't get more disabled.
 					end
 				end
@@ -169,11 +174,11 @@ function rp.load_mods()
 				-- Go for it.
 				for _, other in pairs(before) do
 					-- Check if said mod exists
-					local otherMod = mods[other]
+					local other_mod = mods[other]
 					
 					-- It does!
-					if otherMod and otherMod.status == LoadingStatus.AVAILABLE then
-						local rp = otherMod.manifest.rp
+					if other_mod and other_mod.status == LoadingStatus.AVAILABLE then
+						local rp = other_mod.manifest.rp
 						-- Make sure the field exists
 						rp.requested = rp.requested or {}
 						
@@ -184,8 +189,8 @@ function rp.load_mods()
 						end
 						
 						-- Insert it.
-						table.insert(rp.requested, modName)
-						logInfo('Injected %s as request of %s', modName, other)
+						table.insert(rp.requested, mod_name)
+						log_info('Injected %s as request of %s', mod_name, other)
 					end
 				end
 			end
@@ -193,12 +198,12 @@ function rp.load_mods()
 	end
 	
 	-- Attempts to load said mod
-	local function loadMod(name, mod)
+	local function load_mod(name, mod)
 		log()
 		mod = mod or mods[name]
 		
 		if not mod then
-			logError('Cannot load mod %q: Not found in mod list.', name)
+			log_error('Cannot load mod %q: Not found in mod list.', name)
 			return false
 		end
 		
@@ -207,11 +212,11 @@ function rp.load_mods()
 		end
 		
 		-- Failed or skipped mods do not count.
-		if mod.status == LoadingStatus.FAILED or mod.status == LoadingStatus.SKIPPED then
-			logError('Cannot load %q: status is %s', name, tostring(mod.status))
+		if mod.status == LoadingStatus.FAILED or mod.status == LoadingStatus.SKIPPED or mod.status == LoadingStatus.CONFLICTED or mod.status == LoadingStatus.DISABLED then
+			log_error('Cannot load %q: status is %s', name, tostring(mod.status))
 			return false
 		elseif mod.status == LoadingStatus.LOADING then
-			logError('Cycle found! Attempted to load %q /again/', name)
+			log_error('Cycle found! Attempted to load %q /again/', name)
 			return false
 		end
 		
@@ -222,7 +227,7 @@ function rp.load_mods()
 		
 		-- Version requirement?
 		if tonumber(rpm.required_version) and tonumber(rpm.required_version) > VERSION then
-			logError('Cannot load %q: Required RP version is %d, installed is %d', name, rpm.required_version, VERSION)
+			log_error('Cannot load %q: Required RP version is %d, installed is %d', name, rpm.required_version, VERSION)
 			mod.status = LoadingStatus.FAILED
 			return false
 		end
@@ -237,8 +242,8 @@ function rp.load_mods()
 			
 			for k, required in pairs(requirement) do
 				log('Attempt to load requirement %s for %s', required, name)
-				if not loadMod(required) then
-					logError('Cannot load %q: Required mod %q is missing/not loading/disabled', name, required)
+				if not load_mod(required) then
+					log_error('Cannot load %q: Required mod %q is missing/not loading/disabled', name, required)
 					mod.status = LoadingStatus.FAILED
 					return false
 				end
@@ -256,8 +261,8 @@ function rp.load_mods()
 			
 			for k, requestee in pairs(requested) do
 				log('Attempt to load request %s', requestee, name)
-				if not loadMod(requestee) then
-					logInfo('Requested mod %s for %s not found.', requestee, name)
+				if not load_mod(requestee) then
+					log_info('Requested mod %s for %s not found.', requestee, name)
 				else
 					log('%s successfully loaded for %s', requestee, name)
 				end
@@ -280,23 +285,24 @@ function rp.load_mods()
 				init = init:sub(0, #init - 4)
 			end
 			
-			local successOne, successTwo = rp.run_safe(_host.require, _host, name .. '.' .. init)
+			local success_one, success_two = rp.run_safe(_host.require, _host, name .. '.' .. init)
 			
-			if successTwo == nil then
-				logWarning('%s reported nil; either the mod is not properly written or there was an error. Check stonehearth.log to be sure.', name)
-				successTwo = true
+			if success_two == nil then
+				log_warning('%s reported nil; either the mod is not properly written or there was an error. Check stonehearth.log to be sure.', name)
+				success_two = true
 			end
 			
-			if successOne and successTwo then
+			if success_one and success_two then
 				mod.status = LoadingStatus.LOADED
 				log('Successfully loaded %s', name)
 				return true
 			else
 				mod.status = LoadingStatus.FAILED
+				log_error('Loading %s failed: %s', name, tostring(success_two))
 				return false
 			end
 		else
-			logInfo('No init file for %q found.', name)
+			log_info('No init file for %q found.', name)
 		end
 		
 		-- Nothing to load.
@@ -309,20 +315,20 @@ function rp.load_mods()
 	do
 		local all_mods, available_mods = {}, {}
 		
+		-- They both are loaded, kind of.
+		mods.radiant.status = LoadingStatus.LOADED
+		mods.stonehearth.status = LoadingStatus.LOADED
+		
 		for k, v in pairs(mods) do
 			-- Simple put: Allow reading, disallow changing anything that is present in the original.
-			-- Basically, a proxy-table.
+			-- Basically, a proxy-table. I've seen read-only tables somewhere else, but they were probably userdata.
 			local m = setmetatable({}, { __index = function(_, key) return v[key] end, __newindex = function(_, key, value) if not rawget(v, key) then rawset(_, key, value) end end })
 			all_mods[k] = m
-			if m.status == LoadingStatus.AVAILABLE then
+			if m.status == LoadingStatus.AVAILABLE or m.status == LoadingStatus.SKIPPED then
 				available_mods[k] = m
 			end
 		end
-		
-		-- Until I come to a good conclusion, stonehearth is moved into the available mods.
-		-- I mean, mods can assume that it *did* run and that it did so successfully.
-		-- It's not a RP mod per se though, and therefore the only mod that fulfills `not manifest.json:rp`
-		available_mods.stonehearth = all_mods.stonehearth
+
 		rp.all_mods, rp.available_mods = all_mods, available_mods
 	end
 	
@@ -330,8 +336,8 @@ function rp.load_mods()
 	log("Start loading the mods...")
 	log()
 	
-	for modName, data in pairs(mods) do
-		logInfo('Loading %s returned %s', modName, tostring(loadMod(modName, data)))
+	for mod_name, data in pairs(mods) do
+		log_info('Loading %s returned %s', mod_name, tostring(load_mod(mod_name, data)))
 	end
 	
 	log()
