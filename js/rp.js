@@ -87,7 +87,7 @@ rp = {
 			if (typeof(args[i]) == 'function')
 				args[i] = '(JS function)';
 		}
-		old_callv('rp:log_server', args); 
+		return old_callv('rp:log_server', args).deferred; 
 	},
 	
 	// dump(obj)

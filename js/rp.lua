@@ -5,7 +5,7 @@ function rps:init_server()
 	return require('server_init') ~= nil
 end
 
-function rps:log_server(sess, req, ...)
+function rps:log_server(sess, response, ...)
 	-- The bindings work too well.
 	local t = { ... }
 
@@ -15,6 +15,8 @@ function rps:log_server(sess, req, ...)
 	end
 	
 	rp.log('[JS] ' .. table.concat(t, '\t'))
+	
+	response:resolve(true)
 end
 
 return rps
