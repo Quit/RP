@@ -324,7 +324,7 @@ function rp.load_mods()
 			-- Basically, a proxy-table. I've seen read-only tables somewhere else, but they were probably userdata.
 			local m = setmetatable({}, { __index = function(_, key) return v[key] end, __newindex = function(_, key, value) if not rawget(v, key) then rawset(_, key, value) end end })
 			all_mods[k] = m
-			if m.status == LoadingStatus.AVAILABLE or m.status == LoadingStatus.SKIPPED then
+			if m.status == LoadingStatus.AVAILABLE or m.status == LoadingStatus.SKIPPED or m.status == LoadingStatus.LOADED then
 				available_mods[k] = m
 			end
 		end
