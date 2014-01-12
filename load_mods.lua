@@ -80,6 +80,7 @@ function rp.load_mods()
 	log('Start mod loader...')
 	log()
 	
+	-- List of mods that have been disabled in the config. mod_name => true
 	local disabled_mods = {}
 	
 	for k, v in pairs(CONFIG.disabled_mods) do
@@ -197,6 +198,9 @@ function rp.load_mods()
 		end
 	end
 	
+	-- List of mods that are (still) available. mod_name => mod_data
+	local available_mods = {}
+	
 	-- Attempts to load said mod
 	local function load_mod(name, mod)
 		log()
@@ -228,6 +232,7 @@ function rp.load_mods()
 		-- Version requirement?
 		if tonumber(rpm.required_version) and tonumber(rpm.required_version) > VERSION then
 			log_error('Cannot load %q: Required RP version is %d, installed is %d', name, rpm.required_version, VERSION)
+			available_mods[name] = nil
 			mod.status = LoadingStatus.FAILED
 			return false
 		end
@@ -245,6 +250,7 @@ function rp.load_mods()
 				if not load_mod(required) then
 					log_error('Cannot load %q: Required mod %q is missing/not loading/disabled', name, required)
 					mod.status = LoadingStatus.FAILED
+					available_mods[name] = nil
 					return false
 				end
 				
@@ -298,6 +304,7 @@ function rp.load_mods()
 				return true
 			else
 				mod.status = LoadingStatus.FAILED
+				available_mods[name] = nil
 				log_error('Loading %s failed: %s', name, tostring(success_two))
 				return false
 			end
@@ -312,9 +319,8 @@ function rp.load_mods()
 	
 	-- Provide a copy of the mod table that reflects our current status, but does not allow modifying it.
 	-- (We don't want others to (accidentally) mess around with the mod loading process.)
-	do
-		local all_mods, available_mods = {}, {}
-		
+	do		
+		local all_mods = {}
 		-- They both are loaded, kind of.
 		mods.radiant.status = LoadingStatus.LOADED
 		mods.stonehearth.status = LoadingStatus.LOADED
