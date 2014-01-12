@@ -47,11 +47,6 @@ do
 	assert(type(old_create) == 'function')
 	
 	local proxy_table = {}
-	local post_creation_hooks = {}
-	
-	local function call_hook(func, args)
-		func(unpack(args))
-	end
 	
 	function radiant.entities.create_entity(entity_name)
 		local proxy = proxy_table[entity_name]
@@ -79,20 +74,18 @@ do
 		-- Create the entity already.
 		local ent = old_create(proxy or entity_name)
 		
-		-- Pro: No redunant code.
-		-- Contra: Geez, what IS this
-		for _, name in pairs({ entity_name, proxy }) do
-			local hooks = post_creation_hooks[name]
-			if hooks then
-				for k, v in pairs(hooks) do
-					local succ, err = rp.run_safe(k, ent, unpack(v))
-					if not succ then
-						printf("Hook %s for %s failed: %s", tostring(debug.getinfo(k).short_src), name, err)
-					end
-				end
+		-- Fire two events - one for the original class, one for the proxy.
+		for _, id in pairs({ entity_name, proxy }) do
+			if id then
+				radiant.events.trigger(radiant.events, 'stonehearth:entity_created', {
+					entity = ent, -- Entity that was spawned
+					entity_id = id,
+					original_entity_id = entity_name,
+					proxy_entity_id = proxy
+				})
 			end
 		end
-		
+
 		return ent
 	end
 	
@@ -107,18 +100,6 @@ do
 	
 	function rp.is_entity_proxied(entity_name)
 		return proxy_table[entity_name]
-	end
-	
-	function rp.add_entity_created_hook(entity_name, func, ...)
-		if type(func) ~= 'function' then
-			error("bad argument #2 to 'add_entity_created_hook' (function expected, got " .. type(func) .. ")")
-		end
-		
-		if not post_creation_hooks[entity_name] then
-			post_creation_hooks[entity_name] = {}
-		end
-		
-		post_creation_hooks[entity_name][func] = { ... }
 	end
 end
 
