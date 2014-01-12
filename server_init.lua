@@ -82,10 +82,10 @@ do
 		-- Pro: No redunant code.
 		-- Contra: Geez, what IS this
 		for _, name in pairs({ entity_name, proxy }) do
-			local hooks = proxy_table[name]
+			local hooks = post_creation_hooks[name]
 			if hooks then
 				for k, v in pairs(hooks) do
-					local succ, err = pcall(k, ent, unpack(v))
+					local succ, err = rp.run_safe(k, ent, unpack(v))
 					if not succ then
 						printf("Hook %s for %s failed: %s", tostring(debug.getinfo(k).short_src), name, err)
 					end
