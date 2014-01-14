@@ -31,7 +31,7 @@ do -- Overwrites `io.output' to our log file(s)
 	function print(...)
 		local t = { ... }
 		
-		local argc = #t
+		local argc = select('#', ...)
 		for i = 1, argc do
 			io.write(tostring(t[i]))
 			if i < argc then
