@@ -1,0 +1,16 @@
+{
+	"info" : {
+		"name" : "~rp",
+		"description" : ""
+	},
+	
+	"ui" : {
+		"html" : [
+		],
+		
+		"js" : [ 
+			"file(ui/~rp_loading_screen/~rp_loading_screen.js)",
+			"file(~rp.js)"
+		]
+	}
+}

@@ -1,0 +1,13 @@
+{
+	"info" : {
+		"name" : "<boo>"
+	},
+	
+	"ui" : {
+		"js" : [ 
+			"file(+rp.js)",
+			"file(mod.js)",
+			"file(start_menu.js)"
+		]
+	}
+}

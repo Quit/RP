@@ -26,10 +26,11 @@ SOFTWARE.
 local rp = require('api')
 local CONFIG = rp.CONFIG
 
+-- For the real server, see waaay below
+
 -- * radiant.entities.create_entity proxy,
 -- + rp.set_entity_proxy(oldEnt, newEnt): Will instead of creating oldEnt create an entity of type newEnt. If newEnt is a func, it is to return the new entity name as string and will have the old entity name as first parameter
 -- + rp.is_entity_proxied(entName): Return the string that entName has been proxied with (or nil)
--- + rp.add_entity_created_hook(entName, func, ...): called whenever an entity of this type is created
 
 do --[[ server sided lua fixes ]]
 	-- Madames, Monsieurs de l'enterprise Radiant,
@@ -103,8 +104,35 @@ do
 	end
 end
 
--- Now, load the mods!
-require('load_mods')
--- Delete the config.
-rp.CONFIG = nil
-rp.load_mods()
+-- This is a kind-of-persistent-service-like-timey-wimey-thingy
+local LM = require('load_mods')
+
+local lm_service = LM(true)
+
+local Server = class()
+
+-- radiant.call('rp:log_server', [args ...])
+function Server:log_server(session, response, ...)
+	-- The bindings work too well.
+	local t = { ... }
+
+	local count = select('#', ...)	
+	for i = 1, count do
+		t[i] = tostring(t[i])
+	end
+	
+	rp.log('[JS] ' .. table.concat(t, '\t'))
+	
+	response:resolve(true)
+end
+
+-- Returns the mod loader's data store
+function Server:get_lm_data_store(session, response)
+	return { data = lm_service:get_data_store() }
+end
+
+function Server:_load_mods(session, response)
+	radiant.create_background_task('RP Mod Loading', function() lm_service:load_mods() end)
+end
+
+return Server

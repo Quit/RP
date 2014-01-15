@@ -69,12 +69,9 @@ var dump = function(obj, level, rec, recStr)
 	return text;
 }
 
-// callName => proxyfunc.
-var call_proxies = {};
-	
 // We don't obey your rules.
 var old_callv = radiant.callv.bind(radiant);
-	
+
 // Ember tells us not to create new global variables, because App is already one
 // I say we should create TWO global variables just because!
 rp = {
@@ -86,29 +83,40 @@ rp = {
 		{
 			if (typeof(args[i]) == 'function')
 				args[i] = '(JS function)';
+			else if (typeof(args[i]) == 'object')
+				args[i] = dump(args[i]);
 		}
 		return old_callv('rp:log_server', args).deferred; 
 	},
+	
+	// Call proxies: callName => redirectFunction
+	_callProxies : {},
+		
+	// List of mods that have been registered, modName => modClass
+	_mods : {},
 	
 	// dump(obj)
 	// returns a (dumped) string that is obj.
 	dump : dump,
 	
 	// set_call_proxy(callName, func): redirects all radiant.call(callName) to func; allowing you to return different stuff or mess around altogether.
-	set_call_proxy : function(callName, func) { call_proxies[callName] = func; }
+	set_call_proxy : function(callName, func) { this._callProxies[callName] = func; },
+	
+	// register_mod(modName, modClass): registers said mod with RP for initialisation
+	register_mod : function(modName, modClass) { this._mods[modName] = modClass; }
 }
 
 
 // Initialize RP immediately, *without* audio feedback. Long live rp:log_server.
-radiant.call('rp:init_server').done(function() { rp.log('RP JS Loader done.'); });
+//~ radiant.call('rp:init_server').done(function() { rp.log('RP JS Loader done.'); });
 
 // Now to some magic.
 // Patch radiant.callv (which is used by radiant.call, so we get both!)
 radiant.callv = function(fn, args)
 {
-	if (call_proxies[fn] != null)
+	if (rp._callProxies[fn] != null)
 	{
-		return call_proxies[fn].apply(null, args);
+		return rp._callProxies[fn].apply(null, args);
 	}
 	
 	return old_callv(fn, args);

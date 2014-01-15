@@ -9,23 +9,20 @@
 	
 	"radiant" : {
 		"functions" : {
-			"init_server" : {
-				"controller" : "file(js/rp.lua)",
+			"get_lm_data_store" : {
+				"controller" : "file(server.lua)",
 				"endpoint" : "server"
 			},
 			
 			"log_server" : {
-				"controller" : "file(js/rp.lua)",
+				"controller" : "file(server.lua)",
+				"endpoint" : "server"
+			},
+			
+			"_load_mods" : {
+				"controller" : "file(server.lua)",
 				"endpoint" : "server"
 			}
 		}
-	},
-	
-	"ui" : {
-		"html" : [ "file(js/rp.html)" ],
-		"js" : [ 
-			"file(js/rp.js)", 
-			"file(js/start_menu.js)"
-		]
 	}
 }
