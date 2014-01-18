@@ -80,7 +80,7 @@ local ModSource = {
 rp.constants.mod_status = LoadingStatus
 rp.constants.mod_source = ModSource
 
-function LM:__init(server)
+function LM:__init()
 	-- Initialize
 	self._mods = {}
 	
@@ -99,14 +99,11 @@ function LM:__init(server)
 	-- We haven't loaded yet.
 	self._done = false
 	
-	if server then
+	if radiant.is_server then
 		-- Create our data store
 		self._data_store = _radiant.sim.create_data_store()
 		self:_update_data_store()
-		pause = coroutine.yield
 	end
-	
-	rp.pause = pause
 	
 	-- Build the list of mods already.
 	self:_build_mods_list()
@@ -440,6 +437,11 @@ function LM:get_data_store()
 end
 
 function LM:load_mods()
+	if radiant.is_server then
+		pause = coroutine.yield
+		rp.pause = pause
+	end
+	
 	assert(not self._done)
 	
 	log()

@@ -107,7 +107,7 @@ end
 -- This is a kind-of-persistent-service-like-timey-wimey-thingy
 local LM = require('load_mods')
 
-local lm_service = LM(true)
+local lm_service = LM()
 
 local Server = class()
 
