@@ -62,8 +62,9 @@ App.RPLoadingScreenView = App.View.extend({
 			value: 0
 		});
 			
-    var numBackgrounds = 6;
-    var imageUrl = '/stonehearth/ui/shell/loading_screen/images/bg' + Math.floor((Math.random()*numBackgrounds)) +'.jpg';
+    var numBackgrounds = 1;
+    var imageUrl = '/~rp/ui/~rp_loading_screen/images/bg' + _.random(1, numBackgrounds) +'.jpg';
+		rp.log('using ', imageUrl);
     $('#randomScreen').css('background-image', 'url(' + imageUrl + ')');
 
 		// Get the thing started
