@@ -6,11 +6,17 @@
 	
 	"ui" : {
 		"html" : [
+			"file(ui/~rp_loading_screen/~rp_loading_screen.html)"
+		],
+		
+		"less" : [
+			"file(ui/~rp_loading_screen/~rp_loading_screen.less)"
 		],
 		
 		"js" : [ 
 			"file(ui/~rp_loading_screen/~rp_loading_screen.js)",
-			"file(~rp.js)"
+			"file(~rp.js)",
+			"file(start_menu.js)"
 		]
 	}
 }

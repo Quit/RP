@@ -1,3 +1,28 @@
+/*********************************************************************************
+The MIT License (MIT)
+
+Copyright (c) 2014 RepeatPan
+excluding parts that were written by Radiant Entertainment.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*********************************************************************************/
+
 var dump = function(obj, level, rec, recStr)
 {
 
@@ -81,11 +106,16 @@ rp = {
 		var args = Array.prototype.slice.call(arguments);
 		for (var i = 0; i < args.length; ++i)
 		{
-			if (typeof(args[i]) == 'function')
+			var type = typeof(args[i]);
+			
+			if (type == 'function')
 				args[i] = '(JS function)';
-			else if (typeof(args[i]) == 'object')
+			else if (type == 'object')
 				args[i] = dump(args[i]);
+			else if (type == 'number')
+				args[i] = args[i].toString(); // to deal with NaN and other weirdos; perhaps apply to all elses?
 		}
+		
 		return old_callv('rp:log_server', args).deferred; 
 	},
 	
@@ -95,6 +125,9 @@ rp = {
 	// List of mods that have been registered, modName => modClass
 	_mods : {},
 	
+	// Data for the start menu, if any
+	_startMenuData : [],
+	
 	// dump(obj)
 	// returns a (dumped) string that is obj.
 	dump : dump,
@@ -103,7 +136,18 @@ rp = {
 	set_call_proxy : function(callName, func) { this._callProxies[callName] = func; },
 	
 	// register_mod(modName, modClass): registers said mod with RP for initialisation
-	register_mod : function(modName, modClass) { this._mods[modName] = modClass; }
+	register_mod : function(modName, modClass) { this._mods[modName] = modClass; },
+	
+	// add_to_start_menu(array data): Adds stuff to the start menu
+	add_to_start_menu : function(data)
+	{
+		if (!(data instanceof Array))
+			throw "rp.add_to_start_menu expects an array as first argument.";
+		else if (rp._startMenuData == null)
+			App.StonehearthStartMenu.rp_insertElements(data, true);
+		else
+			rp._startMenuData = rp._startMenuData.concat(data);
+	}
 }
 
 

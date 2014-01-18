@@ -1,6 +1,30 @@
+/*********************************************************************************
+The MIT License (MIT)
+
+Copyright (c) 2014 RepeatPan
+excluding parts that were written by Radiant Entertainment.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*********************************************************************************/
+
 App.RPLoadingScreenView = App.View.extend({
-  templateName: 'stonehearthLoadingScreen',
-	i18nNamespace: 'stonehearth',
+  templateName: 'rpLoadingScreen',
 	
 	// Current index that we pursue
 	modIndex : 0,
@@ -18,6 +42,10 @@ App.RPLoadingScreenView = App.View.extend({
 	// Not now, honey.
 	luaDone : false,
 	
+	// Progress.
+	_progress : 0,
+	_baseProgress : 0,
+	
 	init: function() {
 		this._super();
 	},
@@ -26,16 +54,14 @@ App.RPLoadingScreenView = App.View.extend({
 		var self = this;
 		
 		this._progressbar = $("#progressbar")
-		//~ rp.log(this._progressbar);
-    this._progressbar.progressbar({
+		this._progressbar.progressbar({
 			value: 0
 		});
 			
     var numBackgrounds = 6;
     var imageUrl = '/stonehearth/ui/shell/loading_screen/images/bg' + Math.floor((Math.random()*numBackgrounds)) +'.jpg';
     $('#randomScreen').css('background-image', 'url(' + imageUrl + ')');
-		$('#message').text('Loading mods...');
-		
+
 		// Get the thing started
 		radiant.call('rp:get_lm_data_store').done(function(o) { 
 			// Install the tracer
@@ -65,55 +91,75 @@ App.RPLoadingScreenView = App.View.extend({
 		this.luaDone = o.done;
 		this.mods = o.processed;
 		this.currentlyLoading = o.current_mod;
+		this.modCount = o.count;
 		
 		// Just call @loadMod and see what it does.
 		this.loadMod();
 	},
 	
 	loadMod : function() {	
-		rp.log('loadMod');
 		// Setup
 		var self = this;
-		this._modProgress = 0;
-	
-		// @loadMod thinks @_onModsUpdate is stupid
-		// _mods, modIndex and 3 others like this
-		if (this.modIndex >= this.mods.length)
+		
+		for (; this.modIndex <= this.mods.length; ++this.modIndex)
 		{
-			rp.log('Buffer overflow');
+			// Set our progress already to zero
+			this._modProgress = 0;
+		
+			// @loadMod thinks @_onModsUpdate is stupid
+			// _mods, modIndex and 3 others like this
+			if (this.modIndex >= this.mods.length)
+			{
+				// We can has current mod?
+				// For some reason I believe this will always be false, because of the poll(ut)ing.
+				if (this.currentlyLoading != null) // We can at least display a fancy message!
+					$('#message').html('Loading ' + (this.currentlyLoading.info.name || this.currentlyLoading.name));
+				
+				// If our lua already tell us that we're done, well, we're done.
+				if (this.luaDone)
+					this._done();
+				
+				// Either way, this function ends here.
+				return;
+			}
 			
-			// We can has current mod?
-			// For some reason I believe this will always be false, because of the poll(ut)ing.
-			if (this.currentlyLoading != null) // We can at least display a fancy message!
-				$('#message').html('Loading ' + (this.currentlyLoading.info.name || this.currentlyLoading.name));
+			// Load said mod
+			var mod = this.mods[this.modIndex];
+			// Do we have an entry for it?
+			var _class = rp._mods[mod.name];
 			
-			if (this.luaDone)
-				this._done();
+			// No class => continue
+			if (!_class)
+			{
+				rp.log(mod.name, 'has no class; skip');
+				this._baseProgress += 100 / this.modCount;
+				this._progress = this._baseProgress;
+				this.updateProgress();
+				continue;
+			}
+			
+			// Alright, the class exists I guess.
+			rp.log('Loading mod #' + this.modIndex + '; ' + (mod.info.name || mod.name));
+			
+			// Set the message
+			$('#message').html('Loading ' + (mod.info.name || mod.name));
+			
+			// Attempt to do the mod stuff
+			try
+			{
+				var currentModObject = new _class();
+				// Set the callbacks
+				currentModObject.always(function() { self._onModLoaded(); }).progress(function(progress) { self._onProgress(progress); });
+				// Start working
+				currentModObject.work();
+			}
+			catch (err)
+			{
+				rp.log('Current mod exploded:' + err);
+			}
+			
+			// Either way, done!
 			return;
-		}
-		
-		rp.log('loadMod has work');
-		
-		var mod = this.mods[this.modIndex++];
-		rp.log('Loading mod ', mod);
-		
-		rp.log('Loading mod #' + this.modIndex + '; ' + (mod.info.name || mod.name));
-		
-		// Set the message
-		$('#message').html('Loading ' + mod.name);
-		
-		// Attempt to do the mod stuff
-		try
-		{
-			var currentModObject = new (currentMod._class)();
-			// Set the callbacks
-			currentModObject.always(function() { self._onModLoaded(); }).progress(function(progress) { self._onProgress(progress); });
-			// Start working
-			currentModObject.work();
-		}
-		catch (err)
-		{
-			rp.log('Current mod exploded:' + err);
 		}
 	},
 	
@@ -125,7 +171,7 @@ App.RPLoadingScreenView = App.View.extend({
 		rp.log("All mods loaded.");
 		// Give me something like flushScreen() or so. :(
 		$('#loadingScreen').replaceWith('<div style="height:100%;width:100%;position:absolute;top:0;left:0;background:black;">');
-		setTimeout(function() { App.gotoTitle(); self.destroy(); }, 0);
+		setTimeout(function() { App.gotoTitle(); self.destroy(); }, 100); // 100 seems like a safe guess
 	},
 	
 	_onModLoadingSuccessful: function()
@@ -153,11 +199,11 @@ App.RPLoadingScreenView = App.View.extend({
 		++this.modIndex;
 		rp.log('Mod loaded.');
 		
-		// Update progress by however much taht mod took
+		// Update progress by however much that mod took
 		this._baseProgress += 100 / this.modCount;
-		setTimeout(function() { self.loadMod(); }, 1000);
-		//~ this.loadMod();
 		this.updateProgress();
+		// Load the next mod.
+		setTimeout(function() { self.loadMod(); }, 1000);
 	},
 	 
 	_onProgress : function(progress) {

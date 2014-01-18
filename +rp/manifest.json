@@ -6,8 +6,7 @@
 	"ui" : {
 		"js" : [ 
 			"file(+rp.js)",
-			"file(mod.js)",
-			"file(start_menu.js)"
+			"file(mod.js)"
 		]
 	}
 }
