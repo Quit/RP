@@ -46,8 +46,12 @@ App.RPLoadingScreenView = App.View.extend({
 	_progress : 0,
 	_baseProgress : 0,
 	
+	_toad : null,
+	
 	init: function() {
+		var self = this;
 		this._super();
+		$.get('/~rp/toad.json').done(function(data) { self._toad = data.tips; self.showNextTip(); });
 	},
 
   didInsertElement: function() {
@@ -101,6 +105,8 @@ App.RPLoadingScreenView = App.View.extend({
 		// Setup
 		var self = this;
 		
+		self.showNextTip();
+		
 		for (; this.modIndex <= this.mods.length; ++this.modIndex)
 		{
 			// Set our progress already to zero
@@ -143,6 +149,7 @@ App.RPLoadingScreenView = App.View.extend({
 			
 			// Set the message
 			$('#message').html('Loading ' + (mod.info.name || mod.name));
+			//~ $('#tipOfTheDay').fadeOut(function() { $('#tipOfTheDay').text(mod.info.description || 'No text available').fadeIn(); });
 			
 			// Attempt to do the mod stuff
 			try
@@ -202,8 +209,8 @@ App.RPLoadingScreenView = App.View.extend({
 		// Update progress by however much that mod took
 		this._baseProgress += 100 / this.modCount;
 		this.updateProgress();
-		// Load the next mod.
-		setTimeout(function() { self.loadMod(); }, 1000);
+		// Load the next mod. In theory, I hope this avoids stack overflows.
+		setTimeout(function() { self.loadMod(); }, 0);
 	},
 	 
 	_onProgress : function(progress) {
@@ -222,5 +229,19 @@ App.RPLoadingScreenView = App.View.extend({
 		this._modProgress = progress;
 		this._progress = this._baseProgress + (this._modProgress / this.modCount);
 		this.updateProgress();
+	},
+	
+	_nextTip : 0,
+	
+	showNextTip : function() {
+		var self = this;
+		var now = new Date().getTime();
+		if (now < self._nextTip)
+			return;
+		
+		var tip = self._toad[_.random(0, self._toad.length - 1)];
+		self._nextTip = now + tip.length * 100;
+		
+		$('#tipOfTheDay').fadeOut(function() { $('#tipOfTheDay').text('Did you know? ' + tip).fadeIn(); });
 	}
 });
