@@ -18,5 +18,7 @@
 			"file(~rp.js)",
 			"file(start_menu.js)"
 		]
-	}
+	},
+	
+	"steve_cannon" : "http://quit.github.io/RP-Mods/sc_beta.json"
 }

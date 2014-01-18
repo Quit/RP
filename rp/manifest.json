@@ -24,5 +24,7 @@
 				"endpoint" : "server"
 			}
 		}
-	}
+	},
+	
+	"steve_cannon" : "http://quit.github.io/RP-Mods/sc_beta.json"
 }
