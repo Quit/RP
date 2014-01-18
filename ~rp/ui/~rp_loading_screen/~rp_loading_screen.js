@@ -64,7 +64,6 @@ App.RPLoadingScreenView = App.View.extend({
 			
     var numBackgrounds = 1;
     var imageUrl = '/~rp/ui/~rp_loading_screen/images/bg' + _.random(1, numBackgrounds) +'.jpg';
-		rp.log('using ', imageUrl);
     $('#randomScreen').css('background-image', 'url(' + imageUrl + ')');
 
 		// Get the thing started
@@ -105,8 +104,6 @@ App.RPLoadingScreenView = App.View.extend({
 	loadMod : function() {	
 		// Setup
 		var self = this;
-		
-		self.showNextTip();
 		
 		for (; this.modIndex <= this.mods.length; ++this.modIndex)
 		{
@@ -179,6 +176,7 @@ App.RPLoadingScreenView = App.View.extend({
 		rp.log("All mods loaded.");
 		// Give me something like flushScreen() or so. :(
 		$('#loadingScreen').replaceWith('<div style="height:100%;width:100%;position:absolute;top:0;left:0;background:black;">');
+		clearTimeout(self._tipTimeout);
 		setTimeout(function() { App.gotoTitle(); self.destroy(); }, 100); // 100 seems like a safe guess
 	},
 	
@@ -211,7 +209,7 @@ App.RPLoadingScreenView = App.View.extend({
 		this._baseProgress += 100 / this.modCount;
 		this.updateProgress();
 		// Load the next mod. In theory, I hope this avoids stack overflows.
-		setTimeout(function() { self.loadMod(); }, 0);
+		setTimeout(function() { self.loadMod(); });
 	},
 	 
 	_onProgress : function(progress) {
@@ -231,18 +229,16 @@ App.RPLoadingScreenView = App.View.extend({
 		this._progress = this._baseProgress + (this._modProgress / this.modCount);
 		this.updateProgress();
 	},
-	
-	_nextTip : 0,
+
+	// Timeout for our tip
+	_tipTimeout : null,
 	
 	showNextTip : function() {
 		var self = this;
-		var now = new Date().getTime();
-		if (now < self._nextTip)
-			return;
-		
 		var tip = self._toad[_.random(0, self._toad.length - 1)];
-		self._nextTip = now + tip.length * 100;
 		
 		$('#tipOfTheDay').fadeOut(function() { $('#tipOfTheDay').text('Did you know? ' + tip).fadeIn(); });
+		
+		self._tipTimeout = setTimeout(function() { self.showNextTip(); }, tip.length * 250);
 	}
 });
