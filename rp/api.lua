@@ -239,10 +239,10 @@ do
 	
 	-- Returns the best entry per-field, which allows to just define one field per proposal.
 	-- While writing this function I realized I have no real use for it yet. Oh well.
-	-- For example, calling get_best_proposal(tbl, 'name', 'entity_kind') will return
-	-- the highest available name and the highest available entity_kind, although
+	-- For example, calling get_best_proposal(tbl, 'name', 'entity_id') will return
+	-- the highest available name and the highest available entity_id, although
 	-- both can come from different proposals (if one proposal defined name,
-	-- and the other entity_kind)
+	-- and the other entity_id)
 	function rp.get_best_proposal(proposals, ...)
 		-- Initialize
 		local besties = {}
