@@ -27,6 +27,9 @@ SOFTWARE.
 Add a few events:
 QUERY faction / stonehearth:propose_citizen_name { gender = .., proposals = {} }: Allows mods to propose a name { name = ..., priority = ... }; the highest priority one wins.
 EVENT radiant.events / stonehearth:faction_created { faction = ..., kingdom = ... }: Fired whenever this faction is first created
+QUERY faction / stonehearth:propose_citizen_gender { proposals = {} }: Allows mods to specify a gender for a newly created citizen. Weird balancing tricks go here. { gender = ..., priority = ... }
+QUERY faction / stonehearth:propose_citizen_kind { gender = ..., proposals = {} }: Allow mods to specify a certain model for a newly created citizen { entity_kind = ..., priority = ... }
+EVENT faction / stonehearth:citizen_created { gender = ..., entity_kind = ..., object = ... }: Fired when a citizen was created using these arguments
 ]]
 
 local faction = rp.load_stonehearth_service('population.population_faction')
@@ -39,7 +42,9 @@ function faction:__user_init(faction, kingdom, ...)
 	local ret = { old_init(self, faction, kingdom, ...) }
 	
 	-- Subscribe to... ourselves.
-	radiant.events.listen(self, 'stonehearth:propose_citizen_name', self, self._rp_propose_default_name)
+	radiant.events.listen(self, 'stonehearth:propose_citizen_name', self, self._rp_propose_default_citizen_name)
+	radiant.events.listen(self, 'stonehearth:propose_citizen_gender', self, self._rp_propose_default_citizen_gender)
+	radiant.events.listen(self, 'stonehearth:propose_citizen_kind', self, self._rp_propose_default_citizen_kind)
 	
 	-- Fire an event that declares this faction as initialised
 	radiant.events.trigger(radiant.events, 'stonehearth:faction_created', { faction = faction, kingdom = kingdom, object = self })
@@ -52,30 +57,71 @@ end
 faction._rp_default_name_generator = faction.generate_random_name
 
 -- Propose a default name with priority 0
-function faction:_rp_propose_default_name(event)
-	table.insert(event.proposals, { priority = 0, name = self:_rp_default_name_generator(event.gender) })
+function faction:_rp_propose_default_citizen_name(event)
+	local name = self:_rp_default_name_generator(event.gender)
+	
+	table.insert(event.proposals, { priority = 0, name = name })
+end
+
+function faction:_rp_propose_default_citizen_gender(event)
+	local gender
+	
+  if not self._always_one_girl_hack then
+    gender = "female"
+    self._always_one_girl_hack = true
+  elseif math.random(1, 2) == 1 then
+    gender = "male"
+  else
+    gender = "female"
+  end
+	
+	table.insert(event.proposals, { priority = 0, gender = gender })
+end
+
+function faction:_rp_propose_default_citizen_kind(event)
+	local entities = self._data[event.gender .. "_entities"]
+  local kind = entities[math.random(#entities)]
+	
+	table.insert(event.proposals, { priority = 0, entity_kind = kind })
 end
 
 -- Fires an event to request name proposals; picks the higehst priority one
 function faction:generate_random_name(gender)
 	-- Create our request table
 	local proposals = {}
-	local t = { gender = gender, proposals = proposals }
-	radiant.events.trigger(self, 'stonehearth:propose_citizen_name', t)
+	radiant.events.trigger(self, 'stonehearth:propose_citizen_name', { gender = gender, proposals = proposals })
 	
-	-- Get the first entry already
-	local best = t.proposals[1]
-	local c = #proposals
+	-- Return the best's proposal.
+	return rp.get_best_proposal(proposals, 'name').name
+end
+
+-- Fires so many requests and events it's hard to believe
+function faction:create_new_citizen()
+	-- Get the gender.
+  local proposals = {}
 	
-	-- Search for a higher priority
-	for i = 2, c do
-		if proposals[i].priority > best.priority then
-			best = proposals[i]
-		end
-	end
+	radiant.events.trigger(self, 'stonehearth:propose_citizen_gender', { proposals = proposals })
+
+	local gender = rp.get_best_proposal(proposals, 'gender').gender
 	
-	-- Return the best priority's proposal
-	return best.name
+	-- Get the entity kind
+	proposals = {}
+	radiant.events.trigger(self, 'stonehearth:propose_citizen_kind', { gender = gender, proposals = proposals })
+	
+	local kind = rp.get_best_proposal(proposals, 'entity_kind').entity_kind
+
+	-- Create the citizen using the data we've collected
+  local citizen = radiant.entities.create_entity(kind)
+	
+	-- Set it up.
+  citizen:add_component("unit_info"):set_faction(self._faction_name)
+  self:_set_citizen_initial_state(citizen, gender)
+	
+	-- Trigger a post-creation event
+	radiant.events.trigger(self, "stonehearth:citizen_created", { gender = gender, entity_kind = kind, object = citizen })
+	
+	-- Return said citizen.
+  return citizen
 end
 
 return true
