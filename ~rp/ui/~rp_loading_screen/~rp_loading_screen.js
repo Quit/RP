@@ -129,6 +129,7 @@ App.RPLoadingScreenView = App.View.extend({
 			
 			// Load said mod
 			var mod = this.mods[this.modIndex];
+			
 			// Do we have an entry for it?
 			var _class = rp._mods[mod.name];
 			
@@ -136,6 +137,16 @@ App.RPLoadingScreenView = App.View.extend({
 			if (!_class)
 			{
 				rp.log(mod.name, 'has no class; skip');
+				this._baseProgress += 100 / this.modCount;
+				this._progress = this._baseProgress;
+				this.updateProgress();
+				continue;
+			}
+			
+			// Something went wrong on the lua side => continue
+			if (!mod.load_js)
+			{
+				rp.log(mod.name, 'was marked to be skipped by lua');
 				this._baseProgress += 100 / this.modCount;
 				this._progress = this._baseProgress;
 				this.updateProgress();

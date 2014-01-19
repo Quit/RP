@@ -269,7 +269,9 @@ end
 
 -- Disqualifies said mod for said stauts
 function LM:_processed_mod(mod)
-	table.insert(self._processed_mods, { name = mod.name, status = mod.status, info = mod.manifest.info })
+	local load_js = mod.status == LoadingStatus.LOADED or mod.status == LoadingStatus.SKIPPED
+	
+	table.insert(self._processed_mods, { name = mod.name, status = mod.status, info = mod.manifest.info, load_js = load_js })
 	self:_update_data_store()
 end
 
@@ -316,7 +318,7 @@ function LM:_load_mod(name, mod)
 	-- Version requirement?
 	if tonumber(rpm.required_version) and tonumber(rpm.required_version) > VERSION then
 		log_error('Cannot load %q: Required RP version is %d, installed is %d', name, rpm.required_version, VERSION)
-		available_mods[name] = nil
+		rp.available_mods[name] = nil
 		mod.status = LoadingStatus.FAILED
 		table.remove(self._currently_loading)
 		self:_processed_mod(mod)
@@ -336,7 +338,7 @@ function LM:_load_mod(name, mod)
 			if not load_mod(required) then
 				log_error('Cannot load %q: Required mod %q is missing/not loading/disabled', name, required)
 				mod.status = LoadingStatus.FAILED
-				available_mods[name] = nil
+				rp.available_mods[name] = nil
 				table.remove(self._currently_loading)
 				self:_processed_mod(mod)
 				return false
