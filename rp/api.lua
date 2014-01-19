@@ -271,9 +271,6 @@ do
 	end
 end
 
-rp.log('Trigger fishing...')
-require('population_faction')
-
 rp.log('RPLoader initialized.')
 
 return rp

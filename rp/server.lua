@@ -24,6 +24,11 @@ SOFTWARE.
 ]=============================================================================]
 
 local rp = require('api')
+
+-- Require some fancy APIs
+require('population_faction')
+require('world_generation')
+
 local CONFIG = rp.CONFIG
 
 -- For the real server, see waaay below
