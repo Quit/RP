@@ -51,7 +51,7 @@ App.RPLoadingScreenView = App.View.extend({
 	init: function() {
 		var self = this;
 		this._super();
-		$.get('/~rp/toad.json').done(function(data) { self._toad = data.tips; self.showNextTip(); });
+		$.get('/zzz_rp/toad.json').done(function(data) { self._toad = data.tips; self.showNextTip(); });
 	},
 
   didInsertElement: function() {
@@ -63,7 +63,7 @@ App.RPLoadingScreenView = App.View.extend({
 		});
 			
     var numBackgrounds = 1;
-    var imageUrl = '/~rp/ui/~rp_loading_screen/images/bg' + _.random(1, numBackgrounds) +'.jpg';
+    var imageUrl = '/zzz_rp/ui/~rp_loading_screen/images/bg' + _.random(1, numBackgrounds) +'.jpg';
     $('#randomScreen').css('background-image', 'url(' + imageUrl + ')');
 
 		// Get the thing started
