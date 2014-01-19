@@ -236,6 +236,39 @@ do
 	function rp.load_stonehearth_call_handler(handler_name)
 		return load_stonehearth_thing('call_handlers.' .. handler_name, 'Call handler %q could not be loaded: %s')
 	end
+	
+	-- Returns the best entry per-field, which allows to just define one field per proposal.
+	-- While writing this function I realized I have no real use for it yet. Oh well.
+	-- For example, calling get_best_proposal(tbl, 'name', 'entity_kind') will return
+	-- the highest available name and the highest available entity_kind, although
+	-- both can come from different proposals (if one proposal defined name,
+	-- and the other entity_kind)
+	function rp.get_best_proposal(proposals, ...)
+		-- Initialize
+		local besties = {}
+		for k, v in pairs({ ... }) do
+			besties[v] = { priority = -math.huge, value = nil }
+		end
+		
+		-- Go through the proposals
+		for _, proposal in pairs(proposals) do
+			-- Go through each of the fields we require
+			for field, best in pairs(besties) do
+				if proposal[field] ~= nil and proposal.priority > best.priority then
+					best.priority, best.value = proposal.priority, proposal[field]
+				end
+			end
+		end
+		
+		-- Reform
+		local best = {}
+		for k, v in pairs(besties) do
+			best[k] = v.value
+		end
+		
+		-- Return.
+		return best
+	end
 end
 
 rp.log('Trigger fishing...')
