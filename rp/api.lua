@@ -48,7 +48,7 @@ SOFTWARE.
 require('base')
 
 -- Our ridiculously inflated version
-local VERSION = 2699
+local VERSION = 2701
 
 -- If RP has already been initialized, abort
 -- In related news, >:[ this strict thing.
@@ -237,6 +237,9 @@ do
 		return load_stonehearth_thing('call_handlers.' .. handler_name, 'Call handler %q could not be loaded: %s')
 	end
 end
+
+rp.log('Trigger fishing...')
+require('population_faction')
 
 rp.log('RPLoader initialized.')
 
