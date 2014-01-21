@@ -45,7 +45,7 @@ local RRNC = rp.load_stonehearth_component('renewable_resource_node.renewable_re
 local old_spawn_resource = RRNC.spawn_resource
 
 function RRNC:spawn_resource(location, ...)
-	local ret = { old_spawn_resource(self, ...) }
+	local ret = { old_spawn_resource(self, location, ...) }
 	
 	radiant.events.trigger(self, 'stonehearth:resource_spawned', {})
 	
