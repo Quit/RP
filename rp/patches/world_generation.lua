@@ -71,3 +71,5 @@ function WGS:create_world(async, seed)
 	
   return wg
 end
+
+return true

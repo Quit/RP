@@ -26,8 +26,9 @@ SOFTWARE.
 local rp = require('api')
 
 -- Require some fancy APIs
-require('population_faction')
-require('world_generation')
+require('patches.population_faction')
+require('patches.world_generation')
+require('patches.resources')
 
 local CONFIG = rp.CONFIG
 

@@ -48,7 +48,7 @@ SOFTWARE.
 require('base')
 
 -- Our ridiculously inflated version
-local VERSION = 2701
+local VERSION = 2703
 
 -- If RP has already been initialized, abort
 -- In related news, >:[ this strict thing.
@@ -235,6 +235,11 @@ do
 	
 	function rp.load_stonehearth_call_handler(handler_name)
 		return load_stonehearth_thing('call_handlers.' .. handler_name, 'Call handler %q could not be loaded: %s')
+	end
+	
+	-- TODO: Use manifest magic to determine the file path and include it that way.
+	function rp.load_stonehearth_component(component_name)
+		return load_stonehearth_thing('components.' .. component_name .. '_component')
 	end
 	
 	-- Returns the best entry per-field, which allows to just define one field per proposal.
