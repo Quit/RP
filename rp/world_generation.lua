@@ -49,9 +49,21 @@ function WGS:create_world(async, seed)
 	local proposals = {}
 	radiant.events.trigger(self, 'stonehearth:propose_world_generator', { async = async, seed = seed, proposals = proposals })
 	
+	-- Disable the callback for all generators.
+	for k, v in pairs(proposals) do
+		if v.generator and v.generator.on_poll then
+			radiant.events.unlisten(radiant.events, 'stonehearth:slow_poll', v.generator, v.generator.on_poll)
+		end
+	end
+	
+	-- Get the best generator.
   local wg = rp.get_best_proposal(proposals, 'generator').generator
 	
+	-- Allow mods to modify said generator.
 	radiant.events.trigger(self, 'stonehearth:world_generator_chosen', { generator = wg })
+	
+	-- Re-attach the event.
+	radiant.events.listen(radiant.events, 'stonehearth:slow_poll', wg, wg.on_poll)
 	
   wg:create_world()
 	
