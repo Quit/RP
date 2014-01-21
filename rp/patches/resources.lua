@@ -25,7 +25,7 @@ SOFTWARE.
 
 --[[
 EVENT radiant.events / stonehearth:plant_marked_for_harvesting { entity }: Fired after a plant has been marked for harvesting.
-EVENT stonehearth:renewable_resource_node (component) / stonehearth:resource_spawned {}: Fired after a resource was spawned (i.e. 1 harvesting occured)
+EVENT entity / stonehearth:resource_spawned {}: Fired after a resource was spawned (i.e. 1 harvesting occured)
 ]]
 
 local RCH = rp.load_stonehearth_call_handler('resource_call_handler')
@@ -47,7 +47,7 @@ local old_spawn_resource = RRNC.spawn_resource
 function RRNC:spawn_resource(location, ...)
 	local ret = { old_spawn_resource(self, location, ...) }
 	
-	radiant.events.trigger(self, 'stonehearth:resource_spawned', {})
+	radiant.events.trigger(self._entity, 'stonehearth:renewable_resource_spawned', { resource = self._resource })
 	
 	return unpack(ret)
 end
