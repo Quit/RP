@@ -30,6 +30,7 @@ require('patches.population_faction')
 require('patches.world_generation')
 require('patches.resources')
 require('patches.placeable_items')
+require('timing')
 
 local CONFIG = rp.CONFIG
 
