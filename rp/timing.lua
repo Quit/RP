@@ -89,6 +89,11 @@ radiant.events.listen(radiant.events, 'stonehearth:gameloop', rp, on_gameloop)
 local Timer = class()
 
 function Timer:__init(id, interval, repetition, func, ...)
+	assert(id)
+	assert(interval)
+	assert(repetition)
+	assert(func)
+	
 	self.id, self.interval, self.repetition, self.func, self.args = id, interval, repetition, func, { ... }
 	
 	-- When we'll run the timer the next time
@@ -120,12 +125,12 @@ end
 
 -- Stops the timer and destroys it ASAP
 function Timer:stop()
-	self.repetitions = -1
+	self.repetition = -1
 	self._next_run = math.huge
 end
 
 function Timer:is_stopped()
-	return self.repetitions < 0
+	return self.repetition < 0
 end
 
 --[[ rp functions ]]--

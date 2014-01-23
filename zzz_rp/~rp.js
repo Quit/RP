@@ -65,5 +65,11 @@ App.StonehearthShellView = App.ContainerView.extend({
 /// Patch App.RootView
 // didInsertElement does *nothing*
 App.RootView = App.RootView.extend({
+	init : function()
+	{
+		this._super();
+		App.rootView = this;
+	},
+	
 	didInsertElement : null
 });
