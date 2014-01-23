@@ -68,7 +68,6 @@ local function on_gameloop(_, event)
 	local t = {}
 	
 	for id, timer in pairs(timers) do
-		printf('timer %s: %d <=> %d', tostring(id), timer._next_run, last_now)
 		if timer._next_run <= last_now then
 			-- If we have ran out of repetitions...
 			if not timer:run() then
@@ -90,7 +89,6 @@ radiant.events.listen(radiant.events, 'stonehearth:gameloop', rp, on_gameloop)
 local Timer = class()
 
 function Timer:__init(id, interval, repetition, func, ...)
-	printf('new timer %s %d', tostring(id), interval)
 	self.id, self.interval, self.repetition, self.func, self.args = id, interval, repetition, func, { ... }
 	
 	-- When we'll run the timer the next time
