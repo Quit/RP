@@ -132,27 +132,23 @@ rp = {
 	// returns a (dumped) string that is obj.
 	dump : dump,
 	
-	// set_call_proxy(callName, func): redirects all radiant.call(callName) to func; allowing you to return different stuff or mess around altogether.
-	set_call_proxy : function(callName, func) { this._callProxies[callName] = func; },
+	// setCallProxy(callName, func): redirects all radiant.call(callName) to func; allowing you to return different stuff or mess around altogether.
+	setCallProxy : function(callName, func) { this._callProxies[callName] = func; },
 	
-	// register_mod(modName, modClass): registers said mod with RP for initialisation
-	register_mod : function(modName, modClass) { this._mods[modName] = modClass; },
+	// registerMod(modName, modClass): registers said mod with RP for initialisation
+	registerMod : function(modName, modClass) { this._mods[modName] = modClass; },
 	
-	// add_to_start_menu(array data): Adds stuff to the start menu
-	add_to_start_menu : function(data)
+	// addToStartMenu(array data): Adds stuff to the start menu
+	addToStartMenu : function(data)
 	{
 		if (!(data instanceof Array))
-			throw "rp.add_to_start_menu expects an array as first argument.";
+			throw "rp.addToStartMenu expects an array as first argument.";
 		else if (rp._startMenuData == null)
 			App.StonehearthStartMenu.rp_insertElements(data, true);
 		else
 			rp._startMenuData = rp._startMenuData.concat(data);
 	}
 }
-
-
-// Initialize RP immediately, *without* audio feedback. Long live rp:log_server.
-//~ radiant.call('rp:init_server').done(function() { rp.log('RP JS Loader done.'); });
 
 // Now to some magic.
 // Patch radiant.callv (which is used by radiant.call, so we get both!)
