@@ -9,6 +9,7 @@ local client = _radiant.client
 
 local old_capture_input = client.capture_input
 rp.keyboard_input_disabled = false
+rp.mouse_input_disabled = false
 
 local function patch_on_input(input_capture)
 	local on_input = input_capture.on_input
@@ -18,7 +19,10 @@ local function patch_on_input(input_capture)
 			function(event, ...)
 				if event.type == client.Input.KEYBOARD and rp.keyboard_input_disabled then
 					return true
+				elseif event.type == client.Input.MOUSE and rp.mouse_input_disabled then
+					return true
 				end
+				
 				return callback(event, ...)
 			end
 			)

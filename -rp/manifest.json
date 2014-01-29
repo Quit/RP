@@ -5,8 +5,10 @@
 	
 	"ui" : {
 		"js" : [ 
+			"file(bindfirst.js)",
 			"file(+rp.js)",
-			"file(mod.js)"
+			"file(mod.js)",
+			"file(input_patch.js)"
 		]
 	},
 	

@@ -22,6 +22,11 @@
 			"_load_mods" : {
 				"controller" : "file(server.lua)",
 				"endpoint" : "server"
+			},
+			
+			"set_input_disabled" : {
+				"controller" : "file(client.lua)",
+				"endpoint" : "client"
 			}
 		}
 	},
