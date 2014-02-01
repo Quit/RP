@@ -107,9 +107,7 @@ rp = {
 		for (var i = 0; i < args.length; ++i)
 		{
 			var type = typeof(args[i]);
-			
-			radiant.call('rp:log_server', type, args[i] instanceof jQuery);
-			
+		
 			if (type == 'function')
 				args[i] = '(JS function)';
 			else if (type == 'object')
