@@ -111,7 +111,12 @@ rp = {
 			if (type == 'function')
 				args[i] = '(JS function)';
 			else if (type == 'object')
-				args[i] = dump(args[i]);
+			{
+				if (args[i] instanceof jQuery)
+					args[i] = '(jQuery object)';
+				else
+					args[i] = dump(args[i]);
+			}
 			else if (type == 'number')
 				args[i] = args[i].toString(); // to deal with NaN and other weirdos; perhaps apply to all elses?
 		}
