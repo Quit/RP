@@ -36,6 +36,7 @@ var onFocus = function(element)
 {
 	inputDisabled = true;
 	radiant.call('rp:set_input_disabled', true);
+	$(top).trigger('rp:input_disabled', true);
 	stack.push(element.target);
 }
 
@@ -51,6 +52,7 @@ var onBlur = function(element)
 		return;
 	
 	radiant.call('rp:set_input_disabled', false);
+	$(top).trigger('rp:input_disabled', false);
 	inputDisabled = false;
 }
 
