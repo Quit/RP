@@ -34,9 +34,7 @@ var inputDisabled = false;
 // On focus, disable our input
 var onFocus = function(element)
 {
-	inputDisabled = true;
-	radiant.call('rp:set_input_disabled', true);
-	$(top).trigger('rp:input_disabled', true);
+	rp.setInputDisabled(true);
 	stack.push(element.target);
 }
 
@@ -51,9 +49,7 @@ var onBlur = function(element)
 	if (stack.length > 0)
 		return;
 	
-	radiant.call('rp:set_input_disabled', false);
-	$(top).trigger('rp:input_disabled', false);
-	inputDisabled = false;
+	rp.setInputDisabled(false);
 }
 
 // Patches an element to listen to focus/blur events to disable input properly
@@ -80,3 +76,13 @@ $(top).bindFirst('keydown', function(event)
 	if (inputDisabled)
 		event.stopImmediatePropagation();
 });
+
+rp.setInputDisabled = function(status)
+{
+	if (inputDisabled == status)
+		return;
+	
+	radiant.call('rp:set_input_disabled', status);
+	$(top).trigger('rp:input_disabled', status);
+	inputDisabled = status;
+}
