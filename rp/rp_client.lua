@@ -1,4 +1,6 @@
 local rp = require('api')
+require('client')
+
 -- Load our mods.
 local LM = require('load_mods')
 local lm = LM()
@@ -47,3 +49,5 @@ end
 
 -- Load the mods
 lm:load_mods()
+
+return rp

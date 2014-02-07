@@ -3,31 +3,32 @@
 		"name" : "RPUtils Loader (JS)"
 	},
 	
-	"client" : {
-		"init_script" : "file(client_init.lua)"
-	},
+	"client_init_script" : "file(rp_client)",
 	
-	"radiant" : {
-		"functions" : {
-			"get_lm_data_store" : {
-				"controller" : "file(server.lua)",
-				"endpoint" : "server"
-			},
-			
-			"log_server" : {
-				"controller" : "file(server.lua)",
-				"endpoint" : "server"
-			},
-			
-			"_load_mods" : {
-				"controller" : "file(server.lua)",
-				"endpoint" : "server"
-			},
-			
-			"set_input_disabled" : {
-				"controller" : "file(client.lua)",
-				"endpoint" : "client"
-			}
+	"functions" : {
+		"get_lm_data_store" : {
+			"controller" : "file(rp_server.lua)",
+			"endpoint" : "server"
+		},
+		
+		"log_server" : {
+			"controller" : "file(rp_server.lua)",
+			"endpoint" : "server"
+		},
+		
+		"_client_call" : {
+			"controller" : "file(rp_server.lua)",
+			"endpoint" : "server"
+		},
+		
+		"_load_mods" : {
+			"controller" : "file(rp_server.lua)",
+			"endpoint" : "server"
+		},
+		
+		"set_input_disabled" : {
+			"controller" : "file(client.lua)",
+			"endpoint" : "client"
 		}
 	},
 	

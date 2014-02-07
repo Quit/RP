@@ -46,9 +46,13 @@ SOFTWARE.
 
 -- Require base stuff and overwrites that are somewhat independent-ish
 require('base')
+-- Require additional debug stuff here
+require('patches.debug')
+-- Require base patches now
+require('patches.base')
 
 -- Our ridiculously inflated version
-local VERSION = 2705
+local VERSION = 3399
 
 -- If RP has already been initialized, abort
 -- In related news, >:[ this strict thing.
@@ -62,7 +66,7 @@ local rp = rp -- err yes.
 rp.constants = { VERSION = VERSION } -- We won't have too many constants, but eh.
 
 local function write_to_log(text)
-	radiant.log.write_('rploader', 0, text) -- TODO: Replace this with a proper logger once we figured out where they're logging to.
+	radiant.log.write_('rp_' .. (radiant.is_server and 'server' or 'client'), 0, text) -- TODO: Replace this with a proper logger once we figured out where they're logging to.
 	print('[' .. os.date() .. '] ' .. text)
 end
 
@@ -276,6 +280,12 @@ do
 	end
 end
 
+--[[ Returns if an object is valid. ]]
+function rp.is_valid(val)
+	return val and val.is_valid and val:is_valid()
+end
+
 rp.log('RPLoader initialized.')
 
+print('rp is of type ', type(_G.rp))
 return rp

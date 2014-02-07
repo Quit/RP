@@ -28,7 +28,6 @@ local rp = require('api')
 -- Require some fancy APIs
 require('patches.population_faction')
 require('patches.world_generation')
-require('patches.resources')
 require('patches.placeable_items')
 require('timing')
 

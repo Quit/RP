@@ -25,49 +25,44 @@ SOFTWARE.
 
 --[[
 Adds a few events, with WGS being the world_generation service; WG = WorldGenerator
-QUERY WGS / stonehearth:propose_world_generator { async, seed, proposals } : Propose { priority, generator } to be used to create the world
-EVENT WGS / stonehearth:world_generator_chosen { generator }:  Generator was chosen to create the world; mess around with it *here*
-EVENT WGS / stonehearth:world_created { generator }: A world was created using that generator.
+QUERY WGS / rp:propose_blueprint_generator { async, seed, proposals } : Propose { priority, generator } to be used to create the world. generator is a function that returns the generator upon being called. The generator should not be created unless this function is called.
+EVENT WGS / rp:blueprint_generator_chosen { generator }:  Generator was chosen to create the world; mess around with it *here*
+EVENT WGS / rp:world_created { generator }: A world was created using that generator.
 ]]
 
 -- WGS is a service, i.e. an instantiated object
 local WGS = radiant.mods.load('stonehearth').world_generation
 
--- WG is a class.
-local WG = rp.load_stonehearth_service('world_generation.world_generator')
+local BlueprintGenerator = radiant.mods.require('stonehearth.services.world_generation.blueprint_generator')
 
 -- Proposes a new, default generator
 local function propose_default_generator(_, event)
-	table.insert(event.proposals, { priority = 0, generator = WG(event.async, event.seed) })
+	table.insert(event.proposals, { priority = 0, generator = function() return BlueprintGenerator(event.rng) end })
 end
 
 -- Hook it up.
-radiant.events.listen(WGS, 'stonehearth:propose_world_generator', WGS, propose_default_generator)
+radiant.events.listen(WGS, 'rp:propose_blueprint_generator', WGS, propose_default_generator)
 
 -- Overwrite create_world a tiny bit
-function WGS:create_world(async, seed)
+local old_create_world = WGS.create_world
+
+function WGS:create_world()
 	local proposals = {}
-	radiant.events.trigger(self, 'stonehearth:propose_world_generator', { async = async, seed = seed, proposals = proposals })
-	
-	-- Disable the callback for all generators.
-	for k, v in pairs(proposals) do
-		if v.generator and v.generator.on_poll then
-			radiant.events.unlisten(radiant.events, 'stonehearth:slow_poll', v.generator, v.generator.on_poll)
-		end
-	end
+	radiant.events.trigger(self, 'rp:propose_blueprint_generator', { rng = self._rng, proposals = proposals })
 	
 	-- Get the best generator.
-  local wg = rp.get_best_proposal(proposals, 'generator').generator
+  local wg = rp.get_best_proposal(proposals, 'generator').generator()
 	
 	-- Allow mods to modify said generator.
-	radiant.events.trigger(self, 'stonehearth:world_generator_chosen', { generator = wg })
+	radiant.events.trigger(self, 'rp:blueprint_generator_chosen', { generator = wg })
 	
-	-- Re-attach the event.
-	radiant.events.listen(radiant.events, 'stonehearth:slow_poll', wg, wg.on_poll)
+	-- Set it.
+	self._blueprint_generator = wg
 	
-  wg:create_world()
+	-- Call the old function.
+  old_create_world(self)
 	
-	radiant.events.trigger(self, 'stonehearth:world_created', { generator = wg })
+	radiant.events.trigger(self, 'rp:world_created', { generator = wg })
 	
   return wg
 end
