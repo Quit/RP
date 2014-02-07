@@ -287,5 +287,4 @@ end
 
 rp.log('RPLoader initialized.')
 
-print('rp is of type ', type(_G.rp))
 return rp
