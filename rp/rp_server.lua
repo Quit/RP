@@ -39,16 +39,6 @@ local CONFIG = rp.CONFIG
 -- + rp.set_entity_proxy(oldEnt, newEnt): Will instead of creating oldEnt create an entity of type newEnt. If newEnt is a func, it is to return the new entity name as string and will have the old entity name as first parameter
 -- + rp.is_entity_proxied(entName): Return the string that entName has been proxied with (or nil)
 
-do --[[ server sided lua fixes ]]
-	-- Madames, Monsieurs de l'enterprise Radiant,
-	-- Il n'est pas "serivce", c'est "service"
-	-- xôxô EncorePoêle
-	local api = radiant.mods.load('stonehearth')
-	if api.personality_serivce then
-		api.personality_service = api.personality_serivce
-	end
-end
-
 -- create_entity and proxy friends
 do
 	local old_create = radiant.entities.create_entity
@@ -85,7 +75,7 @@ do
 		-- Fire two events - one for the original class, one for the proxy.
 		for _, id in pairs({ entity_name, proxy }) do
 			if id then
-				radiant.events.trigger(radiant.events, 'stonehearth:entity_created', {
+				radiant.events.trigger(radiant.events, 'rp:entity_created', {
 					entity = ent, -- Entity that was spawned
 					entity_id = id,
 					original_entity_id = entity_name,
