@@ -24,10 +24,13 @@ SOFTWARE.
 ]=============================================================================]
 
 --[[
-Adds a few events, with WGS being the world_generation service; WG = WorldGenerator
+Adds a few events, with WGS being the world_generation service
 QUERY WGS / rp:propose_blueprint_generator { async, seed, proposals } : Propose { priority, generator } to be used to create the world. generator is a function that returns the generator upon being called. The generator should not be created unless this function is called.
 EVENT WGS / rp:blueprint_generator_chosen { generator }:  Generator was chosen to create the world; mess around with it *here*
-EVENT WGS / rp:world_created { generator }: A world was created using that generator.
+EVENT WGS / rp:world_created { generator }: A world was created using that generator
+EVENT WGS / rp:pre_world_creation { service }: Last chance to modify stuff before the world is created.
+EVENT WGS / rp:on_world_creation { service }: Before any other event here is called, this is the entry point to modify stuff. For example, _rng. Not recommended.
+EVENT WGS / rp:on_initialisation { async, game_seed }: Before initialisation gives mods the chance to modify seed and async state.
 ]]
 
 -- WGS is a service, i.e. an instantiated object
@@ -46,7 +49,18 @@ radiant.events.listen(WGS, 'rp:propose_blueprint_generator', WGS, propose_defaul
 -- Overwrite create_world a tiny bit
 local old_create_world = WGS.create_world
 
+local old_initialize = WGS.initialize
+function WGS:initialize(async, game_seed)
+	-- No proposals, I'm mad right now.
+	local t = { async = async, game_seed = game_seed }
+	radiant.events.trigger(self, 'rp:on_initialisation', t)
+	return old_initialize(self, t.async, t.game_seed)
+end
+
 function WGS:create_world()
+	-- Call the pre-everything event.
+	radiant.events.trigger(self, 'rp:on_world_creation', { service = self })
+	
 	local proposals = {}
 	radiant.events.trigger(self, 'rp:propose_blueprint_generator', { rng = self._rng, proposals = proposals })
 	
@@ -58,6 +72,9 @@ function WGS:create_world()
 	
 	-- Set it.
 	self._blueprint_generator = wg
+	
+	-- Last chance to change stuff.
+	radiant.events.trigger(self, 'rp:pre_world_creation', { service = self })
 	
 	-- Call the old function.
   old_create_world(self)
