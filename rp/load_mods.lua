@@ -396,7 +396,7 @@ function LM:_load_mod(name, mod)
 			return true
 		else
 			mod.status = LoadingStatus.FAILED
-			available_mods[name] = nil
+			rp.available_mods[name] = nil
 			log_error('Loading %s failed: %s', name, tostring(success_two))
 			table.remove(self._currently_loading)
 			self:_processed_mod(mod)
