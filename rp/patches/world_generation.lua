@@ -50,25 +50,32 @@ radiant.events.listen(WGS, 'rp:propose_blueprint_generator', WGS, propose_defaul
 local old_create_world = WGS.create_world
 
 local old_initialize = WGS.initialize
-function WGS:initialize(async, game_seed)
+
+function WGS:initialize(game_seed, async)
 	-- No proposals, I'm mad right now.
 	local t = { async = async, game_seed = game_seed }
 	radiant.events.trigger(self, 'rp:on_initialisation', t)
-	return old_initialize(self, t.async, t.game_seed)
+	old_initialize(self, t.game_seed, t.async)
+	
+	radiant.events.trigger(self, 'rp:blueprint_generator_chosen', { generator = self.blueprint_generator })
+end
+
+local old_seed = WGS.set_seed
+function WGS:set_seed(seed)
+	local t = { seed = seed }
+	radiant.events.trigger(self, 'rp:set_seed', t)
+	return old_seed(self, t.seed)
 end
 
 function WGS:create_world()
 	-- Call the pre-everything event.
 	radiant.events.trigger(self, 'rp:on_world_creation', { service = self })
 	
-	local proposals = {}
-	radiant.events.trigger(self, 'rp:propose_blueprint_generator', { rng = self._rng, proposals = proposals })
-	
-	-- Get the best generator.
-  local wg = rp.get_best_proposal(proposals, 'generator').generator()
-	
-	-- Allow mods to modify said generator.
-	radiant.events.trigger(self, 'rp:blueprint_generator_chosen', { generator = wg })
+--~ 	local proposals = {}
+--~ 	radiant.events.trigger(self, 'rp:propose_blueprint_generator', { rng = self._rng, proposals = proposals })
+--~ 	
+--~ 	-- Get the best generator.
+--~   local wg = rp.get_best_proposal(proposals, 'generator').generator()
 	
 	-- Set it.
 	self._blueprint_generator = wg
@@ -83,5 +90,13 @@ function WGS:create_world()
 	
   return wg
 end
+
+--~ local set_blueprint = WGS.set_blueprint
+--~ function WGS:set_blueprint(blueprint)
+--~ 	print('blueprint: ', blueprint)
+--~ 	
+--~ 	
+--~ 	return set_blueprint(self, blueprint)
+--~ end
 
 return true

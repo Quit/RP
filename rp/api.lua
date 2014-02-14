@@ -52,7 +52,7 @@ require('patches.debug')
 require('patches.base')
 
 -- Our ridiculously inflated version
-local VERSION = 3399
+local VERSION = 4099
 
 -- If RP has already been initialized, abort
 -- In related news, >:[ this strict thing.
