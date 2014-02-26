@@ -62,7 +62,7 @@ local timers = {}
 
 local last_now = 0
 
-local function on_gameloop(_, event)
+local function on_gameloop(event)
 	last_now = event.now
 	
 	local t = {}
@@ -83,7 +83,7 @@ local function on_gameloop(_, event)
 		end
 	end
 end
-radiant.events.listen(radiant.events, 'stonehearth:gameloop', rp, on_gameloop)
+radiant.events.listen(radiant.events, 'stonehearth:gameloop', on_gameloop)
 
 --[[ Timer class ]]--
 local Timer = class()
