@@ -117,6 +117,12 @@ function faction:create_new_citizen()
   citizen:add_component("unit_info"):set_faction(self._faction_name)
   self:_set_citizen_initial_state(citizen, gender)
 	
+	local all_variants = radiant.entities.get_entity_data(citizen, "stonehearth:customization_variants")
+  
+  if all_variants then
+    self:customize_citizen(citizen, all_variants, "root")
+  end
+	
 	-- Trigger a post-creation event
 	radiant.events.trigger(self, "rp:citizen_created", { gender = gender, entity_id = kind, object = citizen })
 	
