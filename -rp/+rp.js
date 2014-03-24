@@ -167,6 +167,24 @@ radiant.callv = function(fn, args)
 	return old_callv(fn, args);
 }
 
+// Unproxied radiant_call.
+radiant.native_callv = function(fn, args)
+{
+	return old_callv(fn, args);
+}
+
+
+radiant.native_call = function () {
+	var args = Array.prototype.slice.call(arguments);
+  if (args.length < 1) {
+		throw "radiant:call requires at least 1 argument.";
+	}
+	
+  var fn = args[0];
+  args = args.slice(1);
+  return old_callv(fn, args);
+}
+
 // Patch errors to the console
 var oldError = window.onerror;
 
