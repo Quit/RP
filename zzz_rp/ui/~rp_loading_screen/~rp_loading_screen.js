@@ -97,6 +97,12 @@ App.RPLoadingScreenView = App.View.extend({
 		this.currentlyLoading = o.current_mod;
 		this.modCount = o.count;
 		
+		// Very special case.
+		if (!o.processed.length && o.done)
+		{
+			this._done();
+			return;
+		}
 		// Just call @loadMod and see what it does.
 		this.loadMod();
 	},

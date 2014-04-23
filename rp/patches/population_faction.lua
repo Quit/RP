@@ -32,7 +32,7 @@ QUERY faction / rp:propose_citizen_kind { gender = ..., proposals = {} }: Allow 
 EVENT faction / rp:citizen_created { gender = ..., entity_id = ..., object = ... }: Fired when a citizen was created using these arguments
 ]]
 
-local faction = rp.load_stonehearth_service('population.population_faction')
+local faction = rp.load_stonehearth_service('server.population.population_faction')
 
 -- Patch the initialiser
 local old_init = faction.__user_init

@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]=============================================================================]
 
-local constants = radiant.resources.load_json("/stonehearth/services/calendar/calendar_constants.json")
+local constants = radiant.resources.load_json("/stonehearth/data/calendar/calendar_constants.json")
 
 --[[ Generic helper functions ]]--
 -- Parses a string à "4d12h" into hours, minutes and seconds.

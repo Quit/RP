@@ -36,7 +36,7 @@ EVENT WGS / rp:on_initialisation { async, game_seed }: Before initialisation giv
 -- WGS is a service, i.e. an instantiated object
 local WGS = radiant.mods.load('stonehearth').world_generation
 
-local BlueprintGenerator = radiant.mods.require('stonehearth.services.world_generation.blueprint_generator')
+local BlueprintGenerator = radiant.mods.require('stonehearth.services.server.world_generation.blueprint_generator')
 
 -- Proposes a new, default generator
 local function propose_default_generator(_, event)

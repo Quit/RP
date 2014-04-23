@@ -101,7 +101,7 @@ function LM:__init()
 	
 	if radiant.is_server then
 		-- Create our data store
-		self._data_store = _radiant.sim.create_data_store()
+		self._data_store = radiant.create_datastore()
 		self:_update_data_store()
 	end
 	
@@ -429,7 +429,7 @@ function LM:_update_data_store()
 		}
 		
 		-- insert PrintTable here if necessary
-		self._data_store:update(t)
+		self._data_store:set_data(t)
 		pause()
 	end
 end
@@ -463,6 +463,7 @@ function LM:load_mods()
 	
 	-- One Last Shot
 	self:_update_data_store()
+	print('mods loaded, updated data store')
 	
 	-- "soft" assertions
 	if #self._processed_mods ~= self._mod_count then
