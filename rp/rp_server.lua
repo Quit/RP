@@ -26,7 +26,7 @@ SOFTWARE.
 local rp = require('api')
 
 -- Require some fancy APIs
-require('patches.population_faction')
+--~ require('patches.population_faction') -- was outdated by town and pop
 require('patches.world_generation')
 require('patches.placeable_items')
 require('timing')

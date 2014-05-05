@@ -96,41 +96,41 @@ function faction:generate_random_name(gender)
 end
 
 -- Fires so many requests and events it's hard to believe
-function faction:create_new_citizen()
-	-- Get the gender.
-  local proposals = {}
-	
-	radiant.events.trigger(self, 'rp:propose_citizen_gender', { proposals = proposals })
+--~ function faction:create_new_citizen()
+--~ 	-- Get the gender.
+--~   local proposals = {}
+--~ 	
+--~ 	radiant.events.trigger(self, 'rp:propose_citizen_gender', { proposals = proposals })
 
-	local gender = rp.get_best_proposal(proposals, 'gender').gender
-	
-	-- Get the entity kind
-	proposals = {}
-	radiant.events.trigger(self, 'rp:propose_citizen_kind', { gender = gender, proposals = proposals })
-	
-	local kind = rp.get_best_proposal(proposals, 'entity_id').entity_id
+--~ 	local gender = rp.get_best_proposal(proposals, 'gender').gender
+--~ 	
+--~ 	-- Get the entity kind
+--~ 	proposals = {}
+--~ 	radiant.events.trigger(self, 'rp:propose_citizen_kind', { gender = gender, proposals = proposals })
+--~ 	
+--~ 	local kind = rp.get_best_proposal(proposals, 'entity_id').entity_id
 
-	-- Create the citizen using the data we've collected
-  local citizen = radiant.entities.create_entity(kind)
-	
-	-- Set it up.
-  citizen:add_component("unit_info"):set_faction(self._faction_name)
-  self:_set_citizen_initial_state(citizen, gender)
-	
-	local all_variants = radiant.entities.get_entity_data(citizen, "stonehearth:customization_variants")
-  
-  if all_variants then
-    self:customize_citizen(citizen, all_variants, "root")
-  end
-	
-	-- Trigger a post-creation event
-	radiant.events.trigger(self, "rp:citizen_created", { gender = gender, entity_id = kind, object = citizen })
-	
-	-- Insert it into our table.
-	table.insert(self._citizens, citizen)
-	
-	-- Return said citizen.
-  return citizen
-end
+--~ 	-- Create the citizen using the data we've collected
+--~   local citizen = radiant.entities.create_entity(kind)
+--~ 	
+--~ 	-- Set it up.
+--~   citizen:add_component("unit_info"):set_faction(self._faction_name)
+--~   self:_set_citizen_initial_state(citizen, gender)
+--~ 	
+--~ 	local all_variants = radiant.entities.get_entity_data(citizen, "stonehearth:customization_variants")
+--~   
+--~   if all_variants then
+--~     self:customize_citizen(citizen, all_variants, "root")
+--~   end
+--~ 	
+--~ 	-- Trigger a post-creation event
+--~ 	radiant.events.trigger(self, "rp:citizen_created", { gender = gender, entity_id = kind, object = citizen })
+--~ 	
+--~ 	-- Insert it into our table.
+--~ 	table.insert(self._citizens, citizen)
+--~ 	
+--~ 	-- Return said citizen.
+--~   return citizen
+--~ end
 
 return true
